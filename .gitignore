@@ -1,0 +1,33 @@
+# Environment variables & secrets
+.env
+backend/.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+backend/__pycache__/
+backend/venv/
+backend/uploads/*
+!backend/uploads/.gitkeep
+backend/audio/*
+!backend/audio/.gitkeep
+backend/*.wav
+backend/*.onnx
+
+# Flutter / Dart
+flutter_frontend/.dart_tool/
+flutter_frontend/.pub/
+flutter_frontend/build/
+flutter_frontend/.idea/
+flutter_frontend/*.iml
+
+# Node / React
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+
+# OS files
+.DS_Store
+Thumbs.db
