@@ -39,7 +39,7 @@ def cleanup_old_files(max_age_seconds: int = 7200):
 
 
 # ============================================================
-# 2. LIFESPAN EVENT HANDLER (Modern replacement for @app.on_event)
+# 2. LIFESPAN EVENT HANDLER
 # ============================================================
 
 @asynccontextmanager
@@ -47,7 +47,7 @@ async def lifespan(app: FastAPI):
     cleanup_old_files(max_age_seconds=3600)
     print()
     print("========================================")
-    print("English Tutor API")
+    print("English Tutor API is LIVE")
     print("========================================")
     print("API:     http://127.0.0.1:8000")
     print("Docs:    http://127.0.0.1:8000/docs")
@@ -212,3 +212,12 @@ def tutor(file: UploadFile = File(...), background_tasks: BackgroundTasks = None
         "correction": correction,
         "audio_url": f"/audio/{audio_filename}"
     }
+
+
+# ============================================================
+# 10. ENTRY POINT - START UVICORN SERVER AUTOMATICALLY
+# ============================================================
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
