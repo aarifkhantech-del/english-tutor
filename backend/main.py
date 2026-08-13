@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, UploadFile, File, BackgroundTasks
 from fastapi.staticfiles import StaticFiles
 from faster_whisper import WhisperModel
@@ -13,27 +14,7 @@ from tts_service import text_to_speech
 
 
 # ============================================================
-# 1. CREATE FASTAPI APP
-# ============================================================
-
-app = FastAPI(
-    title="English Tutor API",
-    description="AI English speaking tutor",
-    version="1.0.0"
-)
-
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-
-# ============================================================
-# 2. DIRECTORIES & CLEANUP HELPER
+# 1. DIRECTORIES & CLEANUP HELPER
 # ============================================================
 
 BASE_DIR = Path(__file__).parent
@@ -58,7 +39,46 @@ def cleanup_old_files(max_age_seconds: int = 7200):
 
 
 # ============================================================
-# 3. SERVE GENERATED AUDIO FILES
+# 2. LIFESPAN EVENT HANDLER (Modern replacement for @app.on_event)
+# ============================================================
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    cleanup_old_files(max_age_seconds=3600)
+    print()
+    print("========================================")
+    print("English Tutor API")
+    print("========================================")
+    print("API:     http://127.0.0.1:8000")
+    print("Docs:    http://127.0.0.1:8000/docs")
+    print("Audio:   http://127.0.0.1:8000/audio/")
+    print("========================================")
+    yield
+
+
+# ============================================================
+# 3. CREATE FASTAPI APP
+# ============================================================
+
+app = FastAPI(
+    title="English Tutor API",
+    description="AI English speaking tutor",
+    version="1.0.0",
+    lifespan=lifespan
+)
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+# ============================================================
+# 4. SERVE GENERATED AUDIO FILES
 # ============================================================
 
 app.mount(
@@ -69,7 +89,7 @@ app.mount(
 
 
 # ============================================================
-# 4. LOAD WHISPER
+# 5. LOAD WHISPER
 # ============================================================
 
 print("========================================")
@@ -87,7 +107,7 @@ print()
 
 
 # ============================================================
-# 5. HOME ENDPOINT
+# 6. HOME ENDPOINT
 # ============================================================
 
 @app.get("/")
@@ -99,7 +119,7 @@ def home():
 
 
 # ============================================================
-# 6. HEALTH CHECK
+# 7. HEALTH CHECK
 # ============================================================
 
 @app.get("/health")
@@ -113,7 +133,7 @@ def health():
 
 
 # ============================================================
-# 7. SPEECH → TEXT
+# 8. SPEECH → TEXT
 # ============================================================
 
 @app.post("/transcribe")
@@ -140,7 +160,7 @@ def transcribe(file: UploadFile = File(...), background_tasks: BackgroundTasks =
 
 
 # ============================================================
-# 8. COMPLETE AI TUTOR
+# 9. COMPLETE AI TUTOR
 # ============================================================
 
 @app.post("/tutor")
@@ -192,16 +212,3 @@ def tutor(file: UploadFile = File(...), background_tasks: BackgroundTasks = None
         "correction": correction,
         "audio_url": f"/audio/{audio_filename}"
     }
-
-
-@app.on_event("startup")
-async def startup_event():
-    cleanup_old_files(max_age_seconds=3600)
-    print()
-    print("========================================")
-    print("English Tutor API")
-    print("========================================")
-    print("API:     http://127.0.0.1:8000")
-    print("Docs:    http://127.0.0.1:8000/docs")
-    print("Audio:   http://127.0.0.1:8000/audio/")
-    print("========================================")
