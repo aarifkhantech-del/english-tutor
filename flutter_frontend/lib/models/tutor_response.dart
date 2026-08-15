@@ -1,5 +1,15 @@
 import 'correction_result.dart';
 
+/// Safely extracts a String from a dynamic value.
+/// If the value is already a String, returns it.
+/// If it's a Map or List, converts to JSON-like string.
+/// Returns [fallback] for null.
+String _safeString(dynamic value, [String fallback = '']) {
+  if (value == null) return fallback;
+  if (value is String) return value;
+  return value.toString();
+}
+
 class TutorResponse {
   final String transcription;
   final CorrectionResult correction;
@@ -27,7 +37,7 @@ class TutorResponse {
         encouragement: '',
       );
     } else {
-      final fallback = json['transcription'] as String? ?? '';
+      final fallback = _safeString(json['transcription']);
       correctionObj = CorrectionResult(
         hindiInput: fallback,
         englishTranslation: fallback,
@@ -39,9 +49,9 @@ class TutorResponse {
     }
 
     return TutorResponse(
-      transcription: json['transcription'] as String? ?? '',
+      transcription: _safeString(json['transcription']),
       correction: correctionObj,
-      audioUrl: json['audio_url'] as String? ?? '',
+      audioUrl: _safeString(json['audio_url']),
     );
   }
 }
