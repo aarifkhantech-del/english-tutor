@@ -5,6 +5,24 @@ String _s(dynamic v, [String fallback = '']) {
   return v.toString();
 }
 
+/// Flattens explanation field whether it's a String or a nested Map.
+String _formatExplanation(dynamic v) {
+  if (v == null) return '';
+  if (v is String) return v;
+  if (v is Map) {
+    final parts = <String>[];
+    v.forEach((key, value) {
+      if (value is Map) {
+        value.forEach((k2, v2) => parts.add('$k2: $v2'));
+      } else {
+        parts.add('$value');
+      }
+    });
+    return parts.join(' • ');
+  }
+  return v.toString();
+}
+
 class CorrectionResult {
   final String hindiInput;
   final String englishTranslation;
@@ -35,7 +53,7 @@ class CorrectionResult {
       hindiInput: _s(json['hindi_input']),
       englishTranslation: eng,
       corrected: eng,
-      explanation: _s(json['explanation']),
+      explanation: _formatExplanation(json['explanation']),
       practice: _s(json['practice']),
       encouragement: _s(json['encouragement']),
     );
