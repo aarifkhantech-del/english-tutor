@@ -19,14 +19,19 @@ class TutorResponse {
       correctionObj = CorrectionResult.fromJson(correctionRaw);
     } else if (correctionRaw is String) {
       correctionObj = CorrectionResult(
+        hindiInput: '',
+        englishTranslation: correctionRaw,
         corrected: correctionRaw,
         explanation: '',
         practice: '',
         encouragement: '',
       );
     } else {
+      final fallback = json['transcription'] as String? ?? '';
       correctionObj = CorrectionResult(
-        corrected: json['transcription'] as String? ?? '',
+        hindiInput: fallback,
+        englishTranslation: fallback,
+        corrected: fallback,
         explanation: '',
         practice: '',
         encouragement: '',
