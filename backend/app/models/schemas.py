@@ -1,5 +1,6 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, EmailStr
 from typing import Optional
+from datetime import datetime
 
 
 class CorrectionResult(BaseModel):
@@ -31,3 +32,122 @@ class HealthResponse(BaseModel):
     mistral: str = "configured"
     tts: str = "configured"
     version: str = "2.1.0"
+
+
+# -- Grammar Explainer Schemas -------------------------------------------------
+
+class GrammarRequest(BaseModel):
+    topic: str = Field(..., description="English grammar topic, e.g. 'past tense'")
+
+
+class GrammarExample(BaseModel):
+    sentence: str = Field(..., description="English example sentence")
+    explanation: str = Field(..., description="Why this sentence demonstrates the rule")
+
+
+class GrammarResponse(BaseModel):
+    topic: str = Field(..., description="Normalized grammar topic name")
+    definition: str = Field(..., description="Clear English definition of the grammar rule")
+    hindi_definition: str = Field(..., description="Hindi translation of the definition")
+    examples: list[GrammarExample] = Field(default_factory=list, description="3 examples")
+    tips: list[str] = Field(default_factory=list, description="2-3 practical tips")
+    difficulty: str = Field(default="Beginner", description="Beginner / Intermediate / Advanced")
+
+
+# -- Auth / OTP Schemas --------------------------------------------------------
+
+class OTPRequestIn(BaseModel):
+    """Request body for sending an OTP to an email address."""
+    email: EmailStr = Field(..., description="User's email address")
+
+
+class OTPRequestOut(BaseModel):
+    """Response after requesting an OTP."""
+    message: str
+    email: str
+
+
+class OTPVerifyIn(BaseModel):
+    """Request body for verifying the OTP and receiving a JWT."""
+    email: EmailStr = Field(..., description="Same email used in the OTP request")
+    otp: str = Field(..., min_length=6, max_length=6, description="6-digit OTP")
+
+
+class TokenOut(BaseModel):
+    """JWT access token returned after successful OTP verification."""
+    access_token: str
+    token_type: str = "bearer"
+    email: str
+    is_new_user: bool = Field(description="True if the account was just created")
+
+
+class UserOut(BaseModel):
+    """Current authenticated user info."""
+    id: str
+    email: str
+    is_active: bool
+    created_at: datetime
+    last_login_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+# -- Subscription / Payment Schemas --------------------------------------------
+
+class PlanInfo(BaseModel):
+    """Description of a single subscription plan."""
+    id: str                  # "trial" or "monthly"
+    name: str
+    description: str
+    amount: int              # in INR
+    currency: str
+    duration_days: int
+    badge: Optional[str] = None  # e.g. "Limited Time"
+
+
+class PlansOut(BaseModel):
+    plans: list[PlanInfo]
+
+
+class InitiatePaymentIn(BaseModel):
+    """Request body to initiate a payment for a chosen plan."""
+    plan: str = Field(..., pattern="^(trial|monthly)$", description="'trial' or 'monthly'")
+
+
+class InitiatePaymentOut(BaseModel):
+    """Order details returned to the frontend to open the payment checkout."""
+    order_id: str                        # gateway order ID (or mock ID)
+    subscription_id: str                 # internal subscription ID
+    gateway: str                         # "mock", "razorpay", etc.
+    amount: int                          # in INR
+    currency: str
+    gateway_key: Optional[str] = None    # public key for frontend SDK (e.g. Razorpay key_id)
+
+
+class ConfirmPaymentIn(BaseModel):
+    """Payment confirmation details sent by the frontend after user completes payment."""
+    order_id: str
+    payment_id: str
+    signature: Optional[str] = None      # HMAC signature (required for Razorpay)
+
+
+class SubscriptionStatusOut(BaseModel):
+    """Current subscription state for the authenticated user."""
+    has_subscription: bool
+    plan: Optional[str] = None           # "trial" or "monthly"
+    status: Optional[str] = None         # "active", "expired", "cancelled"
+    is_active: bool
+    starts_at: Optional[datetime] = None
+    expires_at: Optional[datetime] = None
+    days_remaining: int = 0
+    can_use_trial: bool                  # True if user has never used the ₹5 trial
+
+
+class WebhookPayload(BaseModel):
+    """Generic webhook payload — each gateway sends its own shape; stored as-is."""
+    event: Optional[str] = None
+    order_id: Optional[str] = None
+    payment_id: Optional[str] = None
+    status: Optional[str] = None
+

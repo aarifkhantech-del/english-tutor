@@ -4,6 +4,8 @@ uvicorn>=0.29.0
 python-multipart>=0.0.9
 starlette>=0.37.0
 pydantic>=2.7.0
+pydantic[email]>=2.7.0
+pydantic-settings>=2.2.0
 
 # HTTP & environment
 httpx>=0.27.0
@@ -19,3 +21,10 @@ gtts>=2.5.0
 # Data & utilities
 numpy>=1.26.0
 tqdm>=4.66.0
+
+# Auth / Subscription system
+sqlalchemy>=2.0.30
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+aiosmtplib>=3.0.1
+slowapi>=0.1.9

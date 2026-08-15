@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from typing import List
 from dotenv import load_dotenv
 
 # Base backend directory
@@ -10,7 +11,7 @@ load_dotenv(BASE_DIR / ".env")
 
 
 class Settings:
-    PROJECT_NAME: str = "Jio English - Spoken English Tutor"
+    PROJECT_NAME: str = "VocalBharat - Spoken English Tutor"
     VERSION: str = "2.1.0"
     DESCRIPTION: str = "High-performance AI Spoken English tutor for Hindi speakers"
 
@@ -33,6 +34,59 @@ class Settings:
     HOST: str = os.getenv("HOST", "0.0.0.0")
     PORT: int = int(os.getenv("PORT", "8000"))
     CORS_ORIGINS: list[str] = ["*"]
+
+    # ── Database ─────────────────────────────────────────────────────────────
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./english_tutor.db")
+
+    @property
+    def is_sqlite(self) -> bool:
+        return "sqlite" in self.DATABASE_URL
+
+    @property
+    def is_dev(self) -> bool:
+        return os.getenv("ENVIRONMENT", "development") == "development"
+
+    # ── JWT / Auth ────────────────────────────────────────────────────────────
+    SECRET_KEY: str = os.getenv("SECRET_KEY", "change-me-please-use-a-long-random-string")
+    JWT_ALGORITHM: str = "HS256"
+    JWT_EXPIRY_DAYS: int = int(os.getenv("JWT_EXPIRY_DAYS", "7"))
+
+    # ── Email / SMTP ──────────────────────────────────────────────────────────
+    # Leave SMTP_HOST empty → OTPs are printed to the terminal (dev mode)
+    SMTP_HOST: str = os.getenv("SMTP_HOST", "")
+    SMTP_PORT: int = int(os.getenv("SMTP_PORT", "587"))
+    SMTP_USER: str = os.getenv("SMTP_USER", "")
+    SMTP_PASSWORD: str = os.getenv("SMTP_PASSWORD", "")
+    EMAIL_FROM: str = os.getenv("EMAIL_FROM", "VocalBharat <no-reply@vocalbharat.com>")
+
+    @property
+    def use_console_email(self) -> bool:
+        return not self.SMTP_HOST
+
+    # ── OTP ───────────────────────────────────────────────────────────────────
+    OTP_EXPIRY_MINUTES: int = int(os.getenv("OTP_EXPIRY_MINUTES", "10"))
+    OTP_MAX_ATTEMPTS: int = int(os.getenv("OTP_MAX_ATTEMPTS", "5"))
+    OTP_RATE_LIMIT_COUNT: int = int(os.getenv("OTP_RATE_LIMIT_COUNT", "3"))
+    OTP_RATE_LIMIT_WINDOW_MINUTES: int = int(os.getenv("OTP_RATE_LIMIT_WINDOW_MINUTES", "60"))
+
+    # ── Payment ───────────────────────────────────────────────────────────────
+    # Set to 'razorpay', 'cashfree', or 'stripe' when ready
+    PAYMENT_GATEWAY: str = os.getenv("PAYMENT_GATEWAY", "mock")
+    PAYMENT_TRIAL_AMOUNT: int = int(os.getenv("PAYMENT_TRIAL_AMOUNT", "5"))
+    PAYMENT_TRIAL_DAYS: int = int(os.getenv("PAYMENT_TRIAL_DAYS", "5"))
+    PAYMENT_MONTHLY_AMOUNT: int = int(os.getenv("PAYMENT_MONTHLY_AMOUNT", "300"))
+    PAYMENT_CURRENCY: str = os.getenv("PAYMENT_CURRENCY", "INR")
+
+    # Razorpay
+    RAZORPAY_KEY_ID: str = os.getenv("RAZORPAY_KEY_ID", "")
+    RAZORPAY_KEY_SECRET: str = os.getenv("RAZORPAY_KEY_SECRET", "")
+
+    # Stripe
+    STRIPE_SECRET_KEY: str = os.getenv("STRIPE_SECRET_KEY", "")
+    STRIPE_WEBHOOK_SECRET: str = os.getenv("STRIPE_WEBHOOK_SECRET", "")
+
+    # Mock gateway
+    MOCK_WEBHOOK_SECRET: str = os.getenv("MOCK_WEBHOOK_SECRET", "mock-secret-key")
 
 
 settings = Settings()
