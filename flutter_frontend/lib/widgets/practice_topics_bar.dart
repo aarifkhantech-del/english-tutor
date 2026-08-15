@@ -24,28 +24,33 @@ class PracticeTopicsBar extends StatelessWidget {
   static const List<TopicPrompt> topics = [
     TopicPrompt(
       emoji: '👋',
-      title: 'Introduction',
-      sampleSentence: 'Hello! My name is Alex, and I am learning English.',
+      title: 'परिचय',
+      sampleSentence: 'नमस्ते, मेरा नाम अमित है और मैं दिल्ली में रहता हूँ।',
     ),
     TopicPrompt(
       emoji: '☕',
-      title: 'Order Coffee',
-      sampleSentence: 'Can I get a hot cappuccino with oat milk, please?',
+      title: 'चाय / कॉफी',
+      sampleSentence: 'मुझे एक कप गर्म चाय चाहिए।',
     ),
     TopicPrompt(
       emoji: '💼',
-      title: 'Job Interview',
-      sampleSentence: 'I have three years of experience in software development.',
+      title: 'नौकरी',
+      sampleSentence: 'मैं एक सॉफ्टवेयर डेवलपर हूँ और मुझे तीन साल का अनुभव है।',
     ),
     TopicPrompt(
       emoji: '✈️',
-      title: 'Travel Advice',
-      sampleSentence: 'Excuse me, could you tell me where the nearest station is?',
+      title: 'रास्ता पूछना',
+      sampleSentence: 'क्या आप मुझे नजदीकी बस स्टेशन का रास्ता बता सकते हैं?',
     ),
     TopicPrompt(
-      emoji: '🎨',
-      title: 'Hobbies',
-      sampleSentence: 'In my free time, I really enjoy playing guitar and reading books.',
+      emoji: '🛒',
+      title: 'बाजार',
+      sampleSentence: 'मैं बाजार से सब्जियाँ और फल खरीदने जा रहा हूँ।',
+    ),
+    TopicPrompt(
+      emoji: '🎓',
+      title: 'शिक्षा',
+      sampleSentence: 'मैं अंग्रेजी सीखना चाहता हूँ ताकि मैं बेहतर नौकरी पा सकूँ।',
     ),
   ];
 
@@ -61,7 +66,7 @@ class PracticeTopicsBar extends StatelessWidget {
               Icon(Icons.tips_and_updates_outlined, color: AppColors.secondary, size: 18),
               SizedBox(width: 6),
               Text(
-                'Practice Topics',
+                'Hindi में बोलकर शुरू करें',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,

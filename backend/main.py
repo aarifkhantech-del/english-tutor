@@ -47,7 +47,7 @@ async def lifespan(app: FastAPI):
     cleanup_old_files(max_age_seconds=3600)
     print()
     print("========================================")
-    print("English Tutor API is LIVE")
+    print("Hindi -> English Tutor API is LIVE")
     print("========================================")
     print("API:     http://127.0.0.1:8000")
     print("Docs:    http://127.0.0.1:8000/docs")
@@ -61,9 +61,9 @@ async def lifespan(app: FastAPI):
 # ============================================================
 
 app = FastAPI(
-    title="English Tutor API",
-    description="AI English speaking tutor",
-    version="1.0.0",
+    title="Hindi-to-English Tutor API",
+    description="AI Spoken English tutor for Hindi speakers",
+    version="2.0.0",
     lifespan=lifespan
 )
 
@@ -89,15 +89,15 @@ app.mount(
 
 
 # ============================================================
-# 5. LOAD WHISPER
+# 5. LOAD MULTILINGUAL WHISPER MODEL (Supports Hindi)
 # ============================================================
 
 print("========================================")
-print("Loading Whisper model...")
+print("Loading Multilingual Whisper model...")
 print("========================================")
 
 whisper_model = WhisperModel(
-    "base.en",
+    "base",
     device="cpu",
     compute_type="int8"
 )
@@ -113,7 +113,7 @@ print()
 @app.get("/")
 def home():
     return {
-        "message": "English Tutor API is running",
+        "message": "Hindi-to-English Tutor API is running",
         "status": "ok"
     }
 
@@ -147,7 +147,6 @@ def transcribe(file: UploadFile = File(...), background_tasks: BackgroundTasks =
     segments, info = whisper_model.transcribe(
         str(file_path),
         beam_size=1,
-        language="en",
         vad_filter=True
     )
 
@@ -160,7 +159,7 @@ def transcribe(file: UploadFile = File(...), background_tasks: BackgroundTasks =
 
 
 # ============================================================
-# 9. COMPLETE AI TUTOR
+# 9. COMPLETE HINDI → ENGLISH AI TUTOR
 # ============================================================
 
 @app.post("/tutor")
@@ -174,32 +173,31 @@ def tutor(file: UploadFile = File(...), background_tasks: BackgroundTasks = None
 
     print()
     print("========================================")
-    print("ENGLISH TUTOR")
+    print("HINDI -> ENGLISH TUTOR")
     print("========================================")
     print("Audio:", file_path)
 
-    # STEP 2: SPEECH → TEXT
+    # STEP 2: SPEECH → TEXT (HINDI/HINGLISH)
     segments, info = whisper_model.transcribe(
         str(file_path),
         beam_size=1,
-        language="en",
         vad_filter=True
     )
 
     text = " ".join(segment.text.strip() for segment in segments)
-    print("Student said:", text)
+    print("Student spoke (Hindi):", text)
 
     if not text.strip():
-        text = "Hello, I am practicing my English."
+        text = "नमस्ते, मैं अंग्रेजी सीखना चाहता हूँ"
 
-    # STEP 3: TEXT → MISTRAL
+    # STEP 3: TEXT → MISTRAL HINDI TUTOR
     correction = correct_english(text)
     print("Mistral result:", correction)
 
-    # STEP 4: GET CORRECTED SENTENCE
-    corrected_text = correction.get("corrected", text)
+    # STEP 4: GET ENGLISH TRANSLATION
+    corrected_text = correction.get("english_translation") or correction.get("corrected", text)
 
-    # STEP 5: TEXT → SPEECH
+    # STEP 5: TEXT → SPEECH (ENGLISH PRONUNCIATION)
     audio_file = text_to_speech(corrected_text)
     audio_filename = Path(audio_file).name
 
@@ -215,7 +213,7 @@ def tutor(file: UploadFile = File(...), background_tasks: BackgroundTasks = None
 
 
 # ============================================================
-# 10. ENTRY POINT - START UVICORN SERVER AUTOMATICALLY
+# 10. ENTRY POINT
 # ============================================================
 
 if __name__ == "__main__":

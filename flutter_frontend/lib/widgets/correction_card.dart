@@ -16,10 +16,10 @@ class CorrectionCard extends StatelessWidget {
   });
 
   void _copyToClipboard(BuildContext context) {
-    Clipboard.setData(ClipboardData(text: correction.corrected));
+    Clipboard.setData(ClipboardData(text: correction.englishTranslation));
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Copied corrected sentence to clipboard!'),
+        content: Text('English translation copied to clipboard!'),
         duration: Duration(seconds: 2),
         behavior: SnackBarBehavior.floating,
       ),
@@ -62,14 +62,10 @@ class CorrectionCard extends StatelessWidget {
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
-                      Icons.auto_awesome_rounded,
-                      color: AppColors.primaryLight,
-                      size: 16,
-                    ),
+                    Text('🇬🇧', style: TextStyle(fontSize: 14)),
                     SizedBox(width: 6),
                     Text(
-                      'Corrected English',
+                      'English Translation',
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.bold,
@@ -84,7 +80,7 @@ class CorrectionCard extends StatelessWidget {
                 children: [
                   IconButton(
                     icon: const Icon(Icons.copy_rounded, size: 20, color: AppColors.textSecondary),
-                    tooltip: 'Copy sentence',
+                    tooltip: 'Copy translation',
                     onPressed: () => _copyToClipboard(context),
                   ),
                   const SizedBox(width: 4),
@@ -110,9 +106,9 @@ class CorrectionCard extends StatelessWidget {
 
           const SizedBox(height: 16),
 
-          // Corrected Sentence Text
+          // English Translation Text
           Text(
-            correction.corrected,
+            correction.englishTranslation,
             style: const TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -139,7 +135,7 @@ class CorrectionCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        'Why this correction?',
+                        'Grammar & Vocabulary Tip',
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.bold,
@@ -159,6 +155,49 @@ class CorrectionCard extends StatelessWidget {
                   ),
                 ),
               ],
+            ),
+          ],
+
+          if (correction.practice.isNotEmpty) ...[
+            const SizedBox(height: 14),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.secondary.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.secondary.withOpacity(0.25)),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.edit_note_rounded, color: AppColors.secondary, size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Practice Sentence',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.secondary,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          correction.practice,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: AppColors.textSecondary,
+                            height: 1.4,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ],

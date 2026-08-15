@@ -164,12 +164,12 @@ class _TutorHomeScreenState extends State<TutorHomeScreen> {
   void _onSelectTopicPrompt(String sampleSentence) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Try saying: "$sampleSentence"'),
+        content: Text('🎙️ यह बोलने की कोशिश करें: "$sampleSentence"'),
         action: SnackBarAction(
-          label: 'Got it',
+          label: 'ठीक है',
           onPressed: () {},
         ),
-        duration: const Duration(seconds: 4),
+        duration: const Duration(seconds: 5),
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -190,7 +190,7 @@ class _TutorHomeScreenState extends State<TutorHomeScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Text(
-              '🗣️ English Tutor AI',
+              '🇮🇳 Hindi → English',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
             ),
             const SizedBox(width: 8),
@@ -226,7 +226,7 @@ class _TutorHomeScreenState extends State<TutorHomeScreen> {
               // Header Subtitle
               Center(
                 child: Text(
-                  'Practice your spoken English with real-time AI feedback',
+                  'Hindi में बोलें, English में सीखें 🎯',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 14,

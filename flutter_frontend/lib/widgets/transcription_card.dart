@@ -28,14 +28,10 @@ class TranscriptionCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(
-                Icons.record_voice_over_rounded,
-                color: AppColors.secondary,
-                size: 20,
-              ),
+              const Text('🇮🇳', style: TextStyle(fontSize: 18)),
               const SizedBox(width: 8),
               Text(
-                'You Said',
+                'आपने कहा (You Said in Hindi)',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,

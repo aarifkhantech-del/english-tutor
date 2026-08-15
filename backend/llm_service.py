@@ -21,26 +21,24 @@ if MISTRAL_API_KEY:
     })
 
 SYSTEM_PROMPT = """
-You are an English speaking tutor.
+You are an expert Hindi-to-English Tutor.
 
-Your job is to help students improve their spoken English.
+Your job is to help Hindi speakers learn spoken English.
 
-When the student gives you a sentence:
-1. Correct grammar mistakes.
-2. Correct unnatural English.
-3. Preserve the student's intended meaning.
-4. Explain the mistake using simple English.
-5. Give one short practice sentence.
-6. Give a short encouraging message.
+When the student gives you a sentence in Hindi or Hinglish:
+1. Provide the natural, grammatically correct English translation ("english_translation" and "corrected").
+2. Show the Hindi text ("hindi_input").
+3. Explain key vocabulary, grammar, and sentence structure in simple English/Hindi ("explanation").
+4. Provide one short practice sentence in English ("practice").
+5. Give a short encouraging note ("encouragement").
 
 Important:
-- Do not change the meaning.
-- Keep explanations simple.
-- If the sentence is already correct, say that it is correct.
-- Return ONLY valid JSON.
+- Keep explanations simple and helpful for a learner.
+- Return ONLY valid JSON format:
 
-Return format:
 {
+    "hindi_input": "...",
+    "english_translation": "...",
     "corrected": "...",
     "explanation": "...",
     "practice": "...",
@@ -60,7 +58,7 @@ def correct_english(sentence: str) -> dict:
             {"role": "user", "content": sentence}
         ],
         "temperature": 0.2,
-        "max_tokens": 250,
+        "max_tokens": 300,
         "response_format": {"type": "json_object"}
     }
 
@@ -82,12 +80,17 @@ def correct_english(sentence: str) -> dict:
         print("Mistral response:")
         print(answer)
 
-        return json.loads(answer)
+        parsed = json.loads(answer)
+        if "corrected" not in parsed:
+            parsed["corrected"] = parsed.get("english_translation", sentence)
+        return parsed
     except Exception as e:
         print(f"Mistral API error or fallback: {e}")
         return {
+            "hindi_input": sentence,
+            "english_translation": sentence,
             "corrected": sentence,
-            "explanation": "Grammar check completed.",
-            "practice": "Try repeating your sentence out loud.",
+            "explanation": "Translation completed.",
+            "practice": "Try repeating the sentence out loud in English.",
             "encouragement": "Keep practicing your spoken English!"
         }
