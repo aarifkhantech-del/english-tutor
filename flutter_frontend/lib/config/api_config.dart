@@ -3,10 +3,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 class ApiConfig {
   static const String _keyBaseUrl = 'backend_base_url';
 
-  // Default backend URL:
-  // For Android Emulator: http://10.0.2.2:8000
-  // For Web / Windows / iOS Simulator: http://127.0.0.1:8000
-  static const String defaultUrl = 'http://127.0.0.1:8000';
+  // Default backend URL (Render.com production):
+  static const String defaultUrl = 'https://english-tutor-6fx2.onrender.com';
 
   static String _currentBaseUrl = defaultUrl;
 
