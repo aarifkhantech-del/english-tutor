@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 
 class ASRService:
-    """Automated Speech Recognition Service using Faster-Whisper."""
+    """High-performance Automated Speech Recognition Service using Faster-Whisper."""
 
     _instance: "ASRService | None" = None
     _model: WhisperModel | None = None
@@ -19,23 +19,24 @@ class ASRService:
         return cls._instance
 
     def initialize(self) -> None:
-        """Loads the Whisper model into memory if not already loaded."""
+        """Pre-warms and loads the ultra-fast Whisper model into memory."""
         if self._model is None:
-            logger.info("Loading Multilingual Whisper model (%s on %s)...", 
+            logger.info("Loading Fast Multilingual Whisper model (%s on %s)...", 
                         settings.WHISPER_MODEL_SIZE, settings.WHISPER_DEVICE)
             self._model = WhisperModel(
                 settings.WHISPER_MODEL_SIZE,
                 device=settings.WHISPER_DEVICE,
                 compute_type=settings.WHISPER_COMPUTE_TYPE,
+                cpu_threads=4,
             )
-            logger.info("Whisper model successfully loaded.")
+            logger.info("Fast Whisper model successfully loaded.")
 
     @property
     def is_loaded(self) -> bool:
         return self._model is not None
 
     def _sync_transcribe(self, audio_bytes: bytes) -> str:
-        """Synchronous CPU-bound transcription."""
+        """Optimized greedy CPU-bound transcription."""
         if self._model is None:
             self.initialize()
 
@@ -43,8 +44,9 @@ class ASRService:
         segments, _ = self._model.transcribe(
             io.BytesIO(audio_bytes),
             beam_size=1,
+            best_of=1,
             vad_filter=True,
-            vad_parameters=dict(min_silence_duration_ms=500),
+            vad_parameters=dict(min_speech_duration_ms=250, min_silence_duration_ms=300),
             temperature=0.0,
             condition_on_previous_text=False,
         )

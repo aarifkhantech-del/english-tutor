@@ -1,5 +1,6 @@
 # Environment variables & secrets
 .env
+*.env
 backend/.env
 
 # Python
@@ -9,18 +10,30 @@ __pycache__/
 backend/__pycache__/
 backend/venv/
 backend/uploads/*
-!backend/uploads/.gitkeep
 backend/audio/*
-!backend/audio/.gitkeep
 backend/*.wav
+backend/*.mp3
+backend/*.m4a
 backend/*.onnx
 
-# Flutter / Dart
-flutter_frontend/.dart_tool/
-flutter_frontend/.pub/
-flutter_frontend/build/
-flutter_frontend/.idea/
-flutter_frontend/*.iml
+# Android / Gradle / Kotlin
+.gradle/
+.idea/
+*.iml
+local.properties
+.navigation/
+captures/
+.externalNativeBuild
+.cxx/
+build/
+android_frontend/.gradle/
+android_frontend/.idea/
+android_frontend/*.iml
+android_frontend/local.properties
+android_frontend/build/
+android_frontend/app/build/
+android_frontend/gradlew
+android_frontend/gradlew.bat
 
 # Node / React
 node_modules/

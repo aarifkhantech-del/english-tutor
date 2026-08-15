@@ -17,6 +17,10 @@ class TutorResponse(BaseModel):
     audio_b64: str = Field(default="", description="Base64-encoded in-memory MP3 audio pronunciation")
 
 
+class TextTutorRequest(BaseModel):
+    text: str = Field(..., description="Hindi/Hinglish text to translate and tutor")
+
+
 class TranscribeResponse(BaseModel):
     text: str = Field(..., description="Transcribed text from speech")
 

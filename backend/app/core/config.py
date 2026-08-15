@@ -10,7 +10,7 @@ load_dotenv(BASE_DIR / ".env")
 
 
 class Settings:
-    PROJECT_NAME: str = "Hindi-to-English Tutor API"
+    PROJECT_NAME: str = "Jio English - Spoken English Tutor"
     VERSION: str = "2.1.0"
     DESCRIPTION: str = "High-performance AI Spoken English tutor for Hindi speakers"
 
@@ -20,8 +20,8 @@ class Settings:
     MISTRAL_MODEL: str = os.getenv("MISTRAL_MODEL", "mistral-small-latest")
     MISTRAL_TIMEOUT: float = float(os.getenv("MISTRAL_TIMEOUT", "15.0"))
 
-    # Whisper ASR configuration
-    WHISPER_MODEL_SIZE: str = os.getenv("WHISPER_MODEL_SIZE", "base")
+    # Whisper ASR configuration (tiny = sub-second ultra-fast transcription)
+    WHISPER_MODEL_SIZE: str = os.getenv("WHISPER_MODEL_SIZE", "tiny")
     WHISPER_DEVICE: str = os.getenv("WHISPER_DEVICE", "cpu")
     WHISPER_COMPUTE_TYPE: str = os.getenv("WHISPER_COMPUTE_TYPE", "int8")
 
@@ -30,7 +30,7 @@ class Settings:
     TTS_SLOW: bool = False
 
     # Server configuration
-    HOST: str = os.getenv("HOST", "127.0.0.1")
+    HOST: str = os.getenv("HOST", "0.0.0.0")
     PORT: int = int(os.getenv("PORT", "8000"))
     CORS_ORIGINS: list[str] = ["*"]
 
