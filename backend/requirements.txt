@@ -12,8 +12,8 @@ python-dotenv>=1.0.0
 faster-whisper>=1.0.0
 ctranslate2>=4.0.0
 
-# TTS - Piper
-piper-tts>=1.2.0
+# TTS - Google Text-to-Speech
+gtts>=2.5.0
 
 # Data & ML
 numpy>=1.26.0
