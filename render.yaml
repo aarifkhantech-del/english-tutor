@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: hindi-english-tutor-api
+    env: docker
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: MISTRAL_API_KEY
+        sync: false
+      - key: PORT
+        value: 8000
