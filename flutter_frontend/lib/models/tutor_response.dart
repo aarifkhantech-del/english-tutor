@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'dart:typed_data';
 import 'correction_result.dart';
 
 /// Safely extracts a String from a dynamic value.
@@ -13,13 +15,26 @@ String _safeString(dynamic value, [String fallback = '']) {
 class TutorResponse {
   final String transcription;
   final CorrectionResult correction;
+  final String audioB64;
   final String audioUrl;
 
   TutorResponse({
     required this.transcription,
     required this.correction,
-    required this.audioUrl,
+    this.audioB64 = '',
+    this.audioUrl = '',
   });
+
+  bool get hasAudio => audioB64.isNotEmpty || audioUrl.isNotEmpty;
+
+  Uint8List? get audioBytes {
+    if (audioB64.isEmpty) return null;
+    try {
+      return base64Decode(audioB64);
+    } catch (_) {
+      return null;
+    }
+  }
 
   factory TutorResponse.fromJson(Map<String, dynamic> json) {
     final correctionRaw = json['correction'];
@@ -51,6 +66,7 @@ class TutorResponse {
     return TutorResponse(
       transcription: _safeString(json['transcription']),
       correction: correctionObj,
+      audioB64: _safeString(json['audio_b64']),
       audioUrl: _safeString(json['audio_url']),
     );
   }

@@ -6,11 +6,10 @@ ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     DEBIAN_FRONTEND=noninteractive
 
-# Install system dependencies (espeak-ng for piper TTS, ffmpeg for audio processing)
+# Install system dependencies (ffmpeg for audio processing)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     ffmpeg \
-    espeak-ng \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
@@ -29,5 +28,5 @@ COPY . .
 # Expose FastAPI port
 EXPOSE 8000
 
-# Start Uvicorn server
+# Start Uvicorn server using the app factory
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

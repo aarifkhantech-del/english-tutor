@@ -122,8 +122,10 @@ class _TutorHomeScreenState extends State<TutorHomeScreen> {
         ),
       );
 
-      // Auto play pronunciation TTS response
-      if (response.audioUrl.isNotEmpty) {
+      // Auto play pronunciation TTS response (in-memory base64 or URL fallback)
+      if (response.audioB64.isNotEmpty) {
+        await _playerService.playBase64(response.audioB64);
+      } else if (response.audioUrl.isNotEmpty) {
         await _playerService.playAudio(response.audioUrl);
       }
     } catch (e) {
@@ -135,12 +137,16 @@ class _TutorHomeScreenState extends State<TutorHomeScreen> {
   }
 
   Future<void> _playTutorAudio() async {
-    if (_result == null || _result!.audioUrl.isEmpty) return;
+    if (_result == null || !_result!.hasAudio) return;
 
     if (_isPlayingAudio) {
       await _playerService.stop();
     } else {
-      await _playerService.playAudio(_result!.audioUrl);
+      if (_result!.audioB64.isNotEmpty) {
+        await _playerService.playBase64(_result!.audioB64);
+      } else if (_result!.audioUrl.isNotEmpty) {
+        await _playerService.playAudio(_result!.audioUrl);
+      }
     }
   }
 

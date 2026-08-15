@@ -41,9 +41,6 @@ class CorrectionResult {
   });
 
   factory CorrectionResult.fromJson(Map<String, dynamic> json) {
-    final translation = _s(json['english_translation'].isEmpty == true
-        ? json['corrected']
-        : json['english_translation']);
     // Prefer english_translation, fall back to corrected
     final eng = _s(json['english_translation']).isNotEmpty
         ? _s(json['english_translation'])

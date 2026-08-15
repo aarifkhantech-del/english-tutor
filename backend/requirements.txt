@@ -3,21 +3,19 @@ fastapi>=0.110.0
 uvicorn>=0.29.0
 python-multipart>=0.0.9
 starlette>=0.37.0
+pydantic>=2.7.0
 
 # HTTP & environment
-requests>=2.31.0
+httpx>=0.27.0
 python-dotenv>=1.0.0
 
 # AI / Speech recognition
 faster-whisper>=1.0.0
 ctranslate2>=4.0.0
 
-# TTS - Google Text-to-Speech
+# In-memory Text-to-Speech
 gtts>=2.5.0
 
-# Data & ML
+# Data & utilities
 numpy>=1.26.0
-onnxruntime>=1.17.0
-
-# Utilities
 tqdm>=4.66.0
