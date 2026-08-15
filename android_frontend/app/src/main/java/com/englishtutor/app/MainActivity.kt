@@ -361,9 +361,9 @@ fun AppDrawer(
                     ) {
                         Text(
                             text = if (subState.status.isActive)
-                                "⚡ ${if (subState.status.plan == "trial") "Trial" else "Monthly"} (${subState.status.daysRemaining}d left)"
-                            else "Free Tier",
-                            color = if (subState.status.isActive) Color(0xFF00E676) else Color.White.copy(alpha = 0.6f),
+                                "⚡ Monthly Pro (${subState.status.daysRemaining}d left)"
+                            else "Free: ${subState.status.requestsUsed}/20",
+                            color = if (subState.status.isActive) Color(0xFF00E676) else AccentTeal,
                             fontSize = 10.sp,
                             fontWeight = FontWeight.SemiBold
                         )
@@ -441,13 +441,47 @@ fun HomeScreenContent(
     onRequestPermission: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    var showQuotaDialog by remember { mutableStateOf(false) }
+
+    if (showQuotaDialog) {
+        AlertDialog(
+            onDismissRequest = { showQuotaDialog = false },
+            title = {
+                Text("🌟 20 Free Practice Limit Reached", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+            },
+            text = {
+                Text(
+                    "You have completed your 20 free spoken English sessions! Please choose a subscription plan to continue learning with unlimited AI coaching.",
+                    color = Color.White.copy(alpha = 0.85f),
+                    fontSize = 14.sp
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showQuotaDialog = false
+                        onNavigateToSubscription()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2979FF))
+                ) {
+                    Text("View Plans (₹300/mo)", fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showQuotaDialog = false }) {
+                    Text("Cancel", color = Color.White.copy(alpha = 0.6f))
+                }
+            },
+            containerColor = Color(0xFF0F2035)
+        )
+    }
 
     Column(
         modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween
     ) {
-        // Page title & optional trial promo
+        // Page title & quota promo banner
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
                 text = "Hindi to English",
@@ -462,23 +496,39 @@ fun HomeScreenContent(
                 textAlign = TextAlign.Center
             )
 
-            // Promo Banner if trial is available
+            // Promo Banner if not subscribed
             if (!subState.status.isActive) {
                 Spacer(Modifier.height(8.dp))
                 Row(
                     modifier = Modifier
                         .clip(RoundedCornerShape(100.dp))
-                        .background(Color(0xFF00E676).copy(alpha = 0.12f))
-                        .border(1.dp, Color(0xFF00E676).copy(alpha = 0.35f), RoundedCornerShape(100.dp))
+                        .background(
+                            if (subState.status.quotaExceeded) Color(0xFFFF5252).copy(alpha = 0.15f)
+                            else Color(0xFF00E676).copy(alpha = 0.12f)
+                        )
+                        .border(
+                            1.dp,
+                            if (subState.status.quotaExceeded) Color(0xFFFF5252).copy(alpha = 0.5f)
+                            else Color(0xFF00E676).copy(alpha = 0.35f),
+                            RoundedCornerShape(100.dp)
+                        )
                         .clickable(onClick = onNavigateToSubscription)
                         .padding(horizontal = 12.dp, vertical = 4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(Icons.Default.Stars, null, tint = Color(0xFF00E676), modifier = Modifier.size(13.dp))
+                    Icon(
+                        if (subState.status.quotaExceeded) Icons.Default.Lock else Icons.Default.Stars,
+                        null,
+                        tint = if (subState.status.quotaExceeded) Color(0xFFFF5252) else Color(0xFF00E676),
+                        modifier = Modifier.size(13.dp)
+                    )
                     Spacer(Modifier.width(6.dp))
                     Text(
-                        text = "5-Day Trial: Only ₹5 (then ₹300/mo) →",
-                        color = Color(0xFF00E676),
+                        text = if (subState.status.quotaExceeded)
+                            "20 Free Requests Used · Choose a Plan →"
+                        else
+                            "⚡ ${subState.status.requestsRemaining}/20 Free Requests Left · Upgrade →",
+                        color = if (subState.status.quotaExceeded) Color(0xFFFF5252) else Color(0xFF00E676),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -486,7 +536,16 @@ fun HomeScreenContent(
             }
         }
 
-        CompactMicButton(isRecording = uiState.isRecording, onClick = onRequestPermission)
+        CompactMicButton(
+            isRecording = uiState.isRecording,
+            onClick = {
+                if (subState.status.quotaExceeded && !subState.status.isActive) {
+                    showQuotaDialog = true
+                } else {
+                    onRequestPermission()
+                }
+            }
+        )
 
         Column(
             modifier = Modifier.fillMaxWidth(),

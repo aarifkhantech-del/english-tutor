@@ -1,14 +1,18 @@
 import logging
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from app.models.schemas import GrammarRequest, GrammarResponse
 from app.services.grammar_service import grammar_service
+from app.core.security import verify_usage_quota
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["Grammar Explainer"])
 
 
 @router.post("/explain", response_model=GrammarResponse)
-async def explain_grammar(payload: GrammarRequest) -> GrammarResponse:
+async def explain_grammar(
+    payload: GrammarRequest,
+    _quota = Depends(verify_usage_quota),
+) -> GrammarResponse:
     """Explain any English grammar topic with definition, Hindi translation, examples and tips."""
     topic = payload.topic.strip()
     if not topic:

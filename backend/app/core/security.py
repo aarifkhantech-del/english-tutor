@@ -67,3 +67,62 @@ def get_current_user(
             detail="Account not found or deactivated.",
         )
     return user
+
+
+def get_optional_user(
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
+    db: Session = Depends(get_db),
+):
+    """FastAPI dependency — returns current User if bearer token provided, else None."""
+    if credentials is None:
+        return None
+    try:
+        payload = _decode_token(credentials.credentials)
+        email = payload.get("sub")
+        if not email:
+            return None
+        from app.models.db_models import User
+        return db.query(User).filter(User.email == email, User.is_active == True).first()
+    except Exception:
+        return None
+
+
+def verify_usage_quota(
+    user: User | None = Depends(get_optional_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Enforces 20-request quota for free tier.
+    If user is authenticated and has active subscription -> unlimited access.
+    If requests >= FREE_REQUESTS_LIMIT (20) and no active plan -> raises 402.
+    """
+    if user is None:
+        return None
+
+    from app.models.db_models import Subscription
+
+    # Check active subscription
+    sub = (
+        db.query(Subscription)
+        .filter(
+            Subscription.user_id == user.id,
+            Subscription.status == "active",
+        )
+        .first()
+    )
+
+    if sub and sub.is_active:
+        user.request_count = (user.request_count or 0) + 1
+        db.commit()
+        return user
+
+    requests_used = user.request_count or 0
+    if requests_used >= settings.FREE_REQUESTS_LIMIT:
+        raise HTTPException(
+            status_code=status.HTTP_402_PAYMENT_REQUIRED,
+            detail=f"You have used all {settings.FREE_REQUESTS_LIMIT} free practice sessions. Please select a subscription plan to continue.",
+        )
+
+    user.request_count = requests_used + 1
+    db.commit()
+    return user

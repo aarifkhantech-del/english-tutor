@@ -18,7 +18,7 @@ data class SubscriptionUiState(
     val isProcessingPayment: Boolean = false,
     val plans: List<PlanInfo> = emptyList(),
     val status: SubscriptionStatusOut = SubscriptionStatusOut(),
-    val selectedPlanId: String? = "trial",
+    val selectedPlanId: String? = "monthly",
     val errorMessage: String? = null,
     val successMessage: String? = null
 )
@@ -48,8 +48,7 @@ class SubscriptionViewModel(application: Application) : AndroidViewModel(applica
                 _uiState.update {
                     it.copy(
                         plans = listOf(
-                            PlanInfo("trial", "5-Day Trial", "Experience full AI coaching for 5 days.", 5, "INR", 5, "Best for Beginners"),
-                            PlanInfo("monthly", "Monthly Plan", "Unlimited access to all AI coaching and grammar lessons.", 300, "INR", 30, "Most Popular")
+                            PlanInfo("monthly", "Monthly Pro Plan", "Unlimited access to all AI coaching and grammar lessons.", 300, "INR", 30, "Recommended")
                         )
                     )
                 }
@@ -101,7 +100,7 @@ class SubscriptionViewModel(application: Application) : AndroidViewModel(applica
                             it.copy(
                                 isProcessingPayment = false,
                                 status = newStatus,
-                                successMessage = if (planId == "trial") "🎉 5-Day Trial activated successfully!" else "🎉 Monthly subscription activated!"
+                                successMessage = "🎉 Monthly subscription activated successfully! Enjoy unlimited spoken English practice."
                             )
                         }
                         onPaymentSuccess()

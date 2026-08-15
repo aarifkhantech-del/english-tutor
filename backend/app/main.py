@@ -34,11 +34,17 @@ async def lifespan(app: FastAPI):
     """Application lifespan for pre-warming models and managing connections."""
     logger.info("Initializing Hindi -> English Tutor API v%s...", settings.VERSION)
 
-    # Auto-create all database tables (safe to run every startup)
+    # Auto-create all database tables and apply migrations (safe to run every startup)
     from app.models import db_models  # noqa: F401 — ensures models are registered
-    from app.core.database import Base
-    Base.metadata.create_all(bind=engine)
-    logger.info("Database tables initialized.")
+    from app.core.database import init_db
+    init_db()
+    logger.info("Relational database tables verified.")
+
+    # Initialize MongoDB if configured
+    from app.core.mongodb import init_mongodb, close_mongodb
+    mongo_ok = init_mongodb()
+    if mongo_ok:
+        logger.info("MongoDB Atlas persistence is active.")
 
     # Preload Whisper ASR model on startup so the first request is instant
     asr_service.initialize()
@@ -49,6 +55,7 @@ async def lifespan(app: FastAPI):
     logger.info("API Docs:   http://%s:%d/docs", settings.HOST, settings.PORT)
     logger.info("Auth:       http://%s:%d/auth", settings.HOST, settings.PORT)
     logger.info("Payments:   http://%s:%d/subscription", settings.HOST, settings.PORT)
+    logger.info("Storage:    %s", "MongoDB Atlas" if mongo_ok else "SQLite")
     logger.info("Frontend:   http://%s:%d/app", settings.HOST, settings.PORT)
     logger.info("Pipeline:   100%% In-Memory / Zero Disk I/O")
     logger.info("Gateway:    %s", settings.PAYMENT_GATEWAY.upper())
@@ -60,6 +67,7 @@ async def lifespan(app: FastAPI):
     logger.info("Shutting down API resources...")
     await llm_service.close()
     await grammar_service.close()
+    close_mongodb()
     logger.info("Shutdown complete.")
 
 

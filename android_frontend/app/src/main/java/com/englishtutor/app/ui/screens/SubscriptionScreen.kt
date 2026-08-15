@@ -128,8 +128,15 @@ fun SubscriptionScreen(
 
                     if (uiState.status.isActive && uiState.status.plan != null) {
                         Text(
-                            text = "Plan: ${if (uiState.status.plan == "trial") "5-Day Trial (₹5)" else "Monthly Plan (₹300)"}",
-                            color = Color.White.copy(alpha = 0.85f),
+                            text = "Plan: Monthly Pro (₹300/mo) · Active",
+                            color = Color(0xFF00E676),
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    } else {
+                        Text(
+                            text = "Free Tier: ${uiState.status.requestsUsed} / ${uiState.status.requestsLimit} requests used (${uiState.status.requestsRemaining} left)",
+                            color = if (uiState.status.quotaExceeded) Color(0xFFFF5252) else AccentTeal,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Medium
                         )
@@ -151,7 +158,7 @@ fun SubscriptionScreen(
                 Icon(Icons.Default.Info, null, tint = AccentTeal, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    text = "Sign in with email to activate and keep your subscription active across devices.",
+                    text = "Sign in with email to activate your 20 free requests and keep your subscription across devices.",
                     color = Color.White.copy(alpha = 0.85f),
                     fontSize = 12.sp,
                     modifier = Modifier.weight(1f)
@@ -191,8 +198,7 @@ fun SubscriptionScreen(
 
         // ── Plan Cards ──
         val plans = if (uiState.plans.isNotEmpty()) uiState.plans else listOf(
-            PlanInfo("trial", "5-Day Trial", "Full access to AI English coaching for 5 days.", 5, "INR", 5, "Best for Beginners"),
-            PlanInfo("monthly", "Monthly Plan", "Unlimited access to all AI coaching and grammar tools.", 300, "INR", 30, "Most Popular")
+            PlanInfo("monthly", "Monthly Pro Plan", "Unlimited access to all AI coaching and grammar tools.", 300, "INR", 30, "Recommended")
         )
 
         plans.forEach { plan ->
@@ -224,8 +230,6 @@ fun PlanCard(
     onSelect: () -> Unit,
     onSubscribe: () -> Unit
 ) {
-    val isTrial = plan.id == "trial"
-
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -252,15 +256,12 @@ fun PlanCard(
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(100.dp))
-                        .background(
-                            if (isTrial) Color(0xFF00E676).copy(alpha = 0.2f)
-                            else Color(0xFF2979FF).copy(alpha = 0.25f)
-                        )
+                        .background(Color(0xFF00E676).copy(alpha = 0.2f))
                         .padding(horizontal = 10.dp, vertical = 4.dp)
                 ) {
                     Text(
-                        text = plan.badge ?: if (isTrial) "5-Day Offer" else "Monthly",
-                        color = if (isTrial) Color(0xFF00E676) else AccentTeal,
+                        text = plan.badge ?: "Unlimited Pro",
+                        color = Color(0xFF00E676),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -275,7 +276,7 @@ fun PlanCard(
                         fontWeight = FontWeight.Black
                     )
                     Text(
-                        text = " / ${plan.durationDays} days",
+                        text = " / month",
                         color = Color.White.copy(alpha = 0.55f),
                         fontSize = 12.sp,
                         modifier = Modifier.padding(bottom = 4.dp, start = 2.dp)
@@ -303,16 +304,12 @@ fun PlanCard(
             Spacer(Modifier.height(10.dp))
 
             // Feature bullets
-            val features = if (isTrial) listOf(
-                "Hindi to English speech translation",
-                "Instant AI grammar & vocabulary coaching",
-                "Text-to-speech pronunciation audio",
-                "Full 5 days access for just ₹5"
-            ) else listOf(
-                "Unlimited Hindi to English speech translations",
-                "Complete English grammar lessons & tips",
-                "High-speed AI model with zero limits",
-                "Continuous auto-renewal at ₹300/month"
+            val features = listOf(
+                "Unlimited Hindi to English spoken translation",
+                "Real-time AI grammar & vocabulary coaching",
+                "High-quality text-to-speech pronunciation audio",
+                "Full access to Grammar Explorer with tips",
+                "Zero advertisements & priority AI compute"
             )
 
             features.forEach { feature ->
@@ -323,13 +320,13 @@ fun PlanCard(
                     Icon(
                         Icons.Default.CheckCircle,
                         contentDescription = null,
-                        tint = if (isTrial) Color(0xFF00E676) else AccentTeal,
+                        tint = Color(0xFF00E676),
                         modifier = Modifier.size(14.dp)
                     )
                     Spacer(Modifier.width(8.dp))
                     Text(
                         text = feature,
-                        color = Color.White.copy(alpha = 0.8f),
+                        color = Color.White.copy(alpha = 0.85f),
                         fontSize = 12.sp
                     )
                 }
@@ -341,7 +338,7 @@ fun PlanCard(
                 onClick = onSubscribe,
                 enabled = !isProcessing,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = if (isTrial) Color(0xFF00C853) else Color(0xFF2979FF)
+                    containerColor = Color(0xFF2979FF)
                 ),
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth().height(44.dp)
@@ -350,7 +347,7 @@ fun PlanCard(
                     CircularProgressIndicator(color = Color.White, modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
                 } else {
                     Text(
-                        text = if (isTrial) "⚡ Start 5-Day Trial (Pay ₹5)" else "🚀 Get Monthly Plan (₹300)",
+                        text = "🚀 Upgrade to Monthly Pro (₹300)",
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold
                     )

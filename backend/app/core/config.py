@@ -37,6 +37,12 @@ class Settings:
 
     # ── Database ─────────────────────────────────────────────────────────────
     DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./english_tutor.db")
+    MONGODB_URI: str = os.getenv("MONGODB_URI", "")
+    MONGODB_DB_NAME: str = os.getenv("MONGODB_DB_NAME", "vocalbharat")
+
+    @property
+    def use_mongodb(self) -> bool:
+        return bool(self.MONGODB_URI.strip())
 
     @property
     def is_sqlite(self) -> bool:
@@ -69,11 +75,12 @@ class Settings:
     OTP_RATE_LIMIT_COUNT: int = int(os.getenv("OTP_RATE_LIMIT_COUNT", "3"))
     OTP_RATE_LIMIT_WINDOW_MINUTES: int = int(os.getenv("OTP_RATE_LIMIT_WINDOW_MINUTES", "60"))
 
+    # ── Usage Quota ───────────────────────────────────────────────────────────
+    FREE_REQUESTS_LIMIT: int = int(os.getenv("FREE_REQUESTS_LIMIT", "20"))
+
     # ── Payment ───────────────────────────────────────────────────────────────
     # Set to 'razorpay', 'cashfree', or 'stripe' when ready
     PAYMENT_GATEWAY: str = os.getenv("PAYMENT_GATEWAY", "mock")
-    PAYMENT_TRIAL_AMOUNT: int = int(os.getenv("PAYMENT_TRIAL_AMOUNT", "5"))
-    PAYMENT_TRIAL_DAYS: int = int(os.getenv("PAYMENT_TRIAL_DAYS", "5"))
     PAYMENT_MONTHLY_AMOUNT: int = int(os.getenv("PAYMENT_MONTHLY_AMOUNT", "300"))
     PAYMENT_CURRENCY: str = os.getenv("PAYMENT_CURRENCY", "INR")
 

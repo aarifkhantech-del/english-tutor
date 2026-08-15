@@ -56,8 +56,6 @@ def test_complete_auth_and_subscription_flow():
     res = client.get("/subscription/plans")
     assert res.status_code == 200
     plans = res.json()["plans"]
-    assert len(plans) == 2
-    assert any(p["id"] == "trial" and p["amount"] == 5 and p["duration_days"] == 5 for p in plans)
     assert any(p["id"] == "monthly" and p["amount"] == 300 and p["duration_days"] == 30 for p in plans)
 
     # 5. Check initial subscription status (should be false/free tier)
@@ -65,14 +63,14 @@ def test_complete_auth_and_subscription_flow():
     assert res.status_code == 200
     status_data = res.json()
     assert status_data["is_active"] is False
-    assert status_data["can_use_trial"] is True
+    assert status_data["requests_limit"] == 20
 
-    # 6. Initiate 5-Day Trial (₹5)
-    res = client.post("/subscription/initiate", json={"plan": "trial"}, headers=headers)
+    # 6. Initiate Monthly Plan (₹300)
+    res = client.post("/subscription/initiate", json={"plan": "monthly"}, headers=headers)
     assert res.status_code == 200, res.text
     init_data = res.json()
     order_id = init_data["order_id"]
-    assert init_data["amount"] == 5
+    assert init_data["amount"] == 300
 
     # 7. Confirm payment
     res = client.post("/subscription/confirm", json={
@@ -83,16 +81,15 @@ def test_complete_auth_and_subscription_flow():
     assert res.status_code == 200, res.text
     sub_data = res.json()
     assert sub_data["is_active"] is True
-    assert sub_data["plan"] == "trial"
-    assert sub_data["days_remaining"] == 5
+    assert sub_data["plan"] == "monthly"
+    assert sub_data["days_remaining"] == 30
 
     # 8. Check subscription status again
     res = client.get("/subscription/status", headers=headers)
     assert res.status_code == 200
     final_status = res.json()
     assert final_status["is_active"] is True
-    assert final_status["plan"] == "trial"
-    assert final_status["can_use_trial"] is False
+    assert final_status["plan"] == "monthly"
     print("\n[SUCCESS] All Auth & Subscription tests passed successfully!")
 
 if __name__ == "__main__":

@@ -44,6 +44,7 @@ class User(Base):
     id = Column(String(36), primary_key=True, default=_uuid)
     email = Column(String(255), unique=True, nullable=False, index=True)
     is_active = Column(Boolean, default=True, nullable=False)
+    request_count = Column(Integer, default=0, nullable=False)
     created_at = Column(DateTime(timezone=True), default=_now, nullable=False)
     last_login_at = Column(DateTime(timezone=True), nullable=True)
 
@@ -53,7 +54,7 @@ class User(Base):
     payments = relationship("Payment", back_populates="user", cascade="all, delete-orphan")
 
     def __repr__(self) -> str:
-        return f"<User email={self.email} active={self.is_active}>"
+        return f"<User email={self.email} requests={self.request_count} active={self.is_active}>"
 
 
 # ── OTP Requests ──────────────────────────────────────────────────────────────
@@ -93,8 +94,8 @@ class Subscription(Base):
 
     id = Column(String(36), primary_key=True, default=_uuid)
     user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
-    # "trial" = ₹5 / 5 days  |  "monthly" = ₹300 / 30 days
-    plan = Column(Enum("trial", "monthly", name="plan_enum"), nullable=False)
+    # e.g. "monthly", "annual", etc.
+    plan = Column(String(50), nullable=False, default="monthly")
     # "active" / "expired" / "cancelled" / "pending"
     status = Column(
         Enum("pending", "active", "expired", "cancelled", name="sub_status_enum"),

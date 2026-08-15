@@ -97,13 +97,13 @@ class UserOut(BaseModel):
 
 class PlanInfo(BaseModel):
     """Description of a single subscription plan."""
-    id: str                  # "trial" or "monthly"
+    id: str                  # "monthly", "yearly", etc.
     name: str
     description: str
     amount: int              # in INR
     currency: str
     duration_days: int
-    badge: Optional[str] = None  # e.g. "Limited Time"
+    badge: Optional[str] = None  # e.g. "Most Popular"
 
 
 class PlansOut(BaseModel):
@@ -112,7 +112,7 @@ class PlansOut(BaseModel):
 
 class InitiatePaymentIn(BaseModel):
     """Request body to initiate a payment for a chosen plan."""
-    plan: str = Field(..., pattern="^(trial|monthly)$", description="'trial' or 'monthly'")
+    plan: str = Field(default="monthly", description="Subscription plan ID (e.g. 'monthly')")
 
 
 class InitiatePaymentOut(BaseModel):
@@ -133,15 +133,18 @@ class ConfirmPaymentIn(BaseModel):
 
 
 class SubscriptionStatusOut(BaseModel):
-    """Current subscription state for the authenticated user."""
+    """Current subscription state and usage quota for the user."""
     has_subscription: bool
-    plan: Optional[str] = None           # "trial" or "monthly"
+    plan: Optional[str] = None           # "monthly", etc.
     status: Optional[str] = None         # "active", "expired", "cancelled"
     is_active: bool
     starts_at: Optional[datetime] = None
     expires_at: Optional[datetime] = None
     days_remaining: int = 0
-    can_use_trial: bool                  # True if user has never used the ₹5 trial
+    requests_used: int = 0               # Number of requests used
+    requests_limit: int = 20             # Free tier limit (20 requests)
+    requests_remaining: int = 20         # Remaining free requests
+    quota_exceeded: bool = False         # True if >= 20 and no active subscription
 
 
 class WebhookPayload(BaseModel):

@@ -1,16 +1,20 @@
 import logging
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
 from app.models.schemas import TutorResponse, TextTutorRequest
 from app.services.asr_service import asr_service
 from app.services.llm_service import llm_service
 from app.services.tts_service import tts_service
+from app.core.security import verify_usage_quota
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["AI Tutor"])
 
 
 @router.post("/tutor", response_model=TutorResponse)
-async def tutor_interaction(file: UploadFile = File(...)) -> TutorResponse:
+async def tutor_interaction(
+    file: UploadFile = File(...),
+    _quota = Depends(verify_usage_quota),
+) -> TutorResponse:
     """Full end-to-end Hindi-to-English tutoring pipeline from audio recording."""
     try:
         # STEP 1: READ AUDIO IN-MEMORY
@@ -45,7 +49,10 @@ async def tutor_interaction(file: UploadFile = File(...)) -> TutorResponse:
 
 
 @router.post("/tutor/text", response_model=TutorResponse)
-async def tutor_text_interaction(payload: TextTutorRequest) -> TutorResponse:
+async def tutor_text_interaction(
+    payload: TextTutorRequest,
+    _quota = Depends(verify_usage_quota),
+) -> TutorResponse:
     """Tutoring pipeline starting from transcribed Hindi text directly.
     Allows user preview/confirmation before converting to English.
     """

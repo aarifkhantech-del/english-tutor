@@ -33,6 +33,20 @@ class SessionManager(context: Context) {
         return prefs.getString(KEY_USER_EMAIL, null)
     }
 
+    fun getLocalRequestCount(): Int {
+        return prefs.getInt(KEY_REQUEST_COUNT, 0)
+    }
+
+    fun incrementLocalRequestCount(): Int {
+        val next = getLocalRequestCount() + 1
+        prefs.edit().putInt(KEY_REQUEST_COUNT, next).apply()
+        return next
+    }
+
+    fun resetLocalRequestCount() {
+        prefs.edit().putInt(KEY_REQUEST_COUNT, 0).apply()
+    }
+
     fun clearSession() {
         prefs.edit()
             .remove(KEY_AUTH_TOKEN)
@@ -46,6 +60,7 @@ class SessionManager(context: Context) {
         private const val PREF_NAME = "vocalbharat_session"
         private const val KEY_AUTH_TOKEN = "key_auth_token"
         private const val KEY_USER_EMAIL = "key_user_email"
+        private const val KEY_REQUEST_COUNT = "key_request_count"
 
         @Volatile
         private var instance: SessionManager? = null

@@ -43,22 +43,13 @@ def _now() -> datetime:
 def _get_plans() -> list[PlanInfo]:
     return [
         PlanInfo(
-            id="trial",
-            name="5-Day Trial",
-            description="Experience the full VocalBharat learning platform for 5 days.",
-            amount=settings.PAYMENT_TRIAL_AMOUNT,
-            currency=settings.PAYMENT_CURRENCY,
-            duration_days=settings.PAYMENT_TRIAL_DAYS,
-            badge="Best for beginners",
-        ),
-        PlanInfo(
             id="monthly",
-            name="Monthly Plan",
-            description="Unlimited access to all lessons, AI coaching, and grammar tools.",
+            name="Monthly Pro Plan",
+            description="Unlimited access to AI Spoken English tutor, pronunciation feedback, and grammar tools.",
             amount=settings.PAYMENT_MONTHLY_AMOUNT,
             currency=settings.PAYMENT_CURRENCY,
             duration_days=30,
-            badge="Most popular",
+            badge="Recommended",
         ),
     ]
 
@@ -89,31 +80,8 @@ async def initiate_payment(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    plan_id = payload.plan
-
-    # Trial plan: each user can only use it once
-    if plan_id == "trial":
-        used_trial = (
-            db.query(Subscription)
-            .filter(
-                Subscription.user_id == current_user.id,
-                Subscription.plan == "trial",
-                Subscription.status.in_(["active", "expired"]),
-            )
-            .first()
-        )
-        if used_trial:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="You have already used your 5-day trial. Please upgrade to the Monthly plan.",
-            )
-
-    # Determine amount based on plan
-    amount = (
-        settings.PAYMENT_TRIAL_AMOUNT
-        if plan_id == "trial"
-        else settings.PAYMENT_MONTHLY_AMOUNT
-    )
+    plan_id = payload.plan or "monthly"
+    amount = settings.PAYMENT_MONTHLY_AMOUNT
 
     gw = gateway()
     order = await gw.create_order(amount, settings.PAYMENT_CURRENCY, plan_id)
@@ -204,13 +172,9 @@ async def confirm_payment(
             detail=f"Payment verification failed: {result.message}",
         )
 
-    # Activate the subscription
+    # Activate the subscription (30 days)
     now = _now()
-    duration_days = (
-        settings.PAYMENT_TRIAL_DAYS
-        if subscription.plan == "trial"
-        else 30
-    )
+    duration_days = 30
     subscription.status = "active"
     subscription.starts_at = now
     subscription.expires_at = now + timedelta(days=duration_days)
@@ -275,7 +239,7 @@ async def payment_webhook(request: Request, db: Session = Depends(get_db)):
                 sub = db.query(Subscription).filter(Subscription.id == payment.subscription_id).first()
                 if sub and sub.status == "pending":
                     now = _now()
-                    days = settings.PAYMENT_TRIAL_DAYS if sub.plan == "trial" else 30
+                    days = 30
                     sub.status = "active"
                     sub.starts_at = now
                     sub.expires_at = now + timedelta(days=days)
@@ -290,8 +254,8 @@ async def payment_webhook(request: Request, db: Session = Depends(get_db)):
 @router.get(
     "/status",
     response_model=SubscriptionStatusOut,
-    summary="Get subscription status",
-    description="Returns the current subscription plan, status, and expiry for the authenticated user.",
+    summary="Get subscription status and quota",
+    description="Returns the current subscription plan, active state, and remaining free requests quota.",
 )
 async def subscription_status(
     current_user: User = Depends(get_current_user),
@@ -301,7 +265,7 @@ async def subscription_status(
 
 
 def _build_status(user: User, db: Session) -> SubscriptionStatusOut:
-    """Build a SubscriptionStatusOut for a given user."""
+    """Build a SubscriptionStatusOut with usage quota for a given user."""
     # Get the most recent non-cancelled subscription
     sub: Subscription | None = (
         db.query(Subscription)
@@ -313,24 +277,19 @@ def _build_status(user: User, db: Session) -> SubscriptionStatusOut:
         .first()
     )
 
-    # Check if user has ever used trial (even if expired)
-    used_trial = (
-        db.query(Subscription)
-        .filter(
-            Subscription.user_id == user.id,
-            Subscription.plan == "trial",
-            Subscription.status.in_(["active", "expired"]),
-        )
-        .first()
-        is not None
-    )
+    requests_used = int(getattr(user, "request_count", 0))
+    requests_limit = settings.FREE_REQUESTS_LIMIT
+    requests_remaining = max(0, requests_limit - requests_used)
 
     if not sub:
         return SubscriptionStatusOut(
             has_subscription=False,
             is_active=False,
             days_remaining=0,
-            can_use_trial=not used_trial,
+            requests_used=requests_used,
+            requests_limit=requests_limit,
+            requests_remaining=requests_remaining,
+            quota_exceeded=(requests_used >= requests_limit),
         )
 
     # Auto-expire subscriptions that have passed their expiry date
@@ -338,13 +297,19 @@ def _build_status(user: User, db: Session) -> SubscriptionStatusOut:
         sub.status = "expired"
         db.commit()
 
+    is_active = sub.is_active
+    quota_exceeded = (requests_used >= requests_limit) and not is_active
+
     return SubscriptionStatusOut(
         has_subscription=True,
         plan=sub.plan,
         status=sub.status,
-        is_active=sub.is_active,
+        is_active=is_active,
         starts_at=sub.starts_at,
         expires_at=sub.expires_at,
         days_remaining=sub.days_remaining,
-        can_use_trial=not used_trial,
+        requests_used=requests_used,
+        requests_limit=requests_limit,
+        requests_remaining=requests_remaining,
+        quota_exceeded=quota_exceeded,
     )
