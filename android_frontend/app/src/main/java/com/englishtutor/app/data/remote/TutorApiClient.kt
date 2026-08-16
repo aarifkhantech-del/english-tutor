@@ -429,6 +429,65 @@ class TutorApiClient {
             defaultMsg
         }
     }
+
+    /**
+     * Submit user feedback (rating + message) to the owner's email.
+     */
+    suspend fun submitFeedback(
+        baseUrl: String,
+        payload: com.englishtutor.app.data.model.FeedbackRequest
+    ): Result<com.englishtutor.app.data.model.FeedbackResponse> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val cleanUrl = baseUrl.trimEnd('/')
+                val endpoint = "$cleanUrl/feedback/submit"
+                val jsonBody = gson.toJson(payload)
+                    .toRequestBody("application/json".toMediaTypeOrNull())
+                val request = Request.Builder().url(endpoint).post(jsonBody).build()
+                client.newCall(request).execute().use { response ->
+                    val body = response.body?.string() ?: ""
+                    if (response.isSuccessful) {
+                        val result = gson.fromJson(body, com.englishtutor.app.data.model.FeedbackResponse::class.java)
+                        Result.success(result)
+                    } else {
+                        Result.failure(Exception(parseErrorMessage(body, "Feedback submission failed")))
+                    }
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+    }
+
+    /**
+     * Submit a help/support request to the owner's email.
+     */
+    suspend fun submitHelp(
+        baseUrl: String,
+        payload: com.englishtutor.app.data.model.HelpRequest
+    ): Result<com.englishtutor.app.data.model.FeedbackResponse> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val cleanUrl = baseUrl.trimEnd('/')
+                val endpoint = "$cleanUrl/feedback/help"
+                val jsonBody = gson.toJson(payload)
+                    .toRequestBody("application/json".toMediaTypeOrNull())
+                val request = Request.Builder().url(endpoint).post(jsonBody).build()
+                client.newCall(request).execute().use { response ->
+                    val body = response.body?.string() ?: ""
+                    if (response.isSuccessful) {
+                        val result = gson.fromJson(body, com.englishtutor.app.data.model.FeedbackResponse::class.java)
+                        Result.success(result)
+                    } else {
+                        Result.failure(Exception(parseErrorMessage(body, "Help request failed")))
+                    }
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+    }
 }
+
 
 

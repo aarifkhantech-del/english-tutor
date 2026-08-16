@@ -73,16 +73,27 @@ def test_complete_auth_and_subscription_flow():
     assert init_data["amount"] == 300
 
     # 7. Confirm payment
+    from app.core.config import settings
+    import hmac
+    import hashlib
+
+    payment_id = "pay_mock_12345"
+    sig = None
+    if settings.PAYMENT_GATEWAY == "razorpay" and settings.RAZORPAY_KEY_SECRET:
+        msg = f"{order_id}|{payment_id}"
+        sig = hmac.new(settings.RAZORPAY_KEY_SECRET.encode(), msg.encode(), hashlib.sha256).hexdigest()
+
     res = client.post("/subscription/confirm", json={
         "order_id": order_id,
-        "payment_id": "mock_pay_12345",
-        "signature": None
+        "payment_id": payment_id,
+        "signature": sig
     }, headers=headers)
     assert res.status_code == 200, res.text
     sub_data = res.json()
     assert sub_data["is_active"] is True
     assert sub_data["plan"] == "monthly"
     assert sub_data["days_remaining"] == 30
+
 
     # 8. Check subscription status again
     res = client.get("/subscription/status", headers=headers)

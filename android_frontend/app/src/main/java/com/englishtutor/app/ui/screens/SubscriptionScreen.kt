@@ -36,7 +36,8 @@ fun SubscriptionScreen(
     serverUrl: String,
     onSelectPlan: (String) -> Unit,
     onSubscribe: (String) -> Unit,
-    onNavigateToLogin: () -> Unit
+    onNavigateToLogin: () -> Unit,
+    onOpenWebCheckout: () -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
 
@@ -214,8 +215,8 @@ fun SubscriptionScreen(
 
         Spacer(Modifier.height(8.dp))
         Text(
-            text = "🔒 Secure payment gateway · Cancel anytime · Zero ads",
-            color = Color.White.copy(alpha = 0.4f),
+            text = "🔒 Secured by Razorpay · UPI, Cards, NetBanking",
+            color = Color.White.copy(alpha = 0.5f),
             fontSize = 11.sp,
             textAlign = TextAlign.Center
         )
@@ -353,6 +354,7 @@ fun PlanCard(
                     )
                 }
             }
+
         }
     }
 }

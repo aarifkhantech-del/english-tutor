@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VocalBharat — AI Hindi to English Spoken Tutor</title>
+  <meta name="description" content="Master spoken English with real-time AI speech coaching, grammar breakdown, native pronunciation audio, and grammar explorer." />
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="/static/style.css" />
+
+  <!-- Razorpay Standard Checkout SDK -->
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+</head>
+<body>
+  <!-- Ambient background glow elements -->
+  <div class="background-decorations">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+    <div class="grid-overlay"></div>
+  </div>
+
+  <div class="app-layout">
+    <!-- Top Navigation Bar -->
+    <header class="top-nav">
+      <div class="nav-container">
+        <!-- Brand Logo -->
+        <div class="brand-block" onclick="navigateTo('tutor')">
+          <div class="brand-logo">
+            <i class="fa-solid fa-microphone-lines"></i>
+          </div>
+          <div class="brand-info">
+            <div class="brand-title">VocalBharat <span class="brand-tag">AI</span></div>
+            <div class="brand-desc">Hindi to English Spoken Coach</div>
+          </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <nav class="nav-tabs">
+          <button class="nav-tab active" id="tab-tutor" onclick="navigateTo('tutor')">
+            <i class="fa-solid fa-language"></i>
+            <span>AI Tutor</span>
+          </button>
+          <button class="nav-tab" id="tab-grammar" onclick="navigateTo('grammar')">
+            <i class="fa-solid fa-graduation-cap"></i>
+            <span>Grammar Explorer</span>
+          </button>
+          <button class="nav-tab" id="tab-pricing" onclick="navigateTo('pricing')">
+            <i class="fa-solid fa-crown"></i>
+            <span>Plans & Pricing</span>
+          </button>
+          <button class="nav-tab" id="tab-feedback" onclick="navigateTo('feedback')">
+            <i class="fa-solid fa-star"></i>
+            <span>Feedback</span>
+          </button>
+          <button class="nav-tab" id="tab-help" onclick="navigateTo('help')">
+            <i class="fa-solid fa-life-ring"></i>
+            <span>Help & Support</span>
+          </button>
+        </nav>
+
+        <!-- Right Action Controls -->
+        <div class="nav-actions">
+          <!-- Server Status Indicator -->
+          <div class="server-status-pill" id="serverStatusPill" title="FastAPI Backend Health">
+            <span class="status-indicator-dot online" id="statusDot"></span>
+            <span class="status-text" id="statusText">Online</span>
+          </div>
+
+          <!-- User Account Status / Auth Button -->
+          <div class="user-action-container" id="userActionContainer">
+            <button class="btn-account-pill" id="btnAccount" onclick="openAccountModal()">
+              <i class="fa-solid fa-user-circle"></i>
+              <span id="accountLabel">Sign In</span>
+              <span class="quota-badge" id="quotaBadge">20 Free</span>
+            </button>
+          </div>
+
+          <!-- Upgrade CTA Button -->
+          <button class="btn-upgrade-nav" onclick="navigateTo('pricing')">
+            <i class="fa-solid fa-bolt"></i>
+            <span>Upgrade Pro</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Container Views -->
+    <main class="main-content">
+      
+      <!-- ========================================================================= -->
+      <!-- VIEW 1: HINDI TO ENGLISH SPOKEN TUTOR -->
+      <!-- ========================================================================= -->
+      <section class="view-section active" id="view-tutor">
+        <div class="section-hero">
+          <h1 class="hero-title">Speak Hindi, Master <span class="gradient-text">Fluent English</span></h1>
+          <p class="hero-subtitle">Bolo Hindi mein, seekho correct English with instant AI feedback, native pronunciation & grammar explanations.</p>
+        </div>
+
+        <!-- Quota Banner if Guest or Free Tier -->
+        <div class="quota-banner-card" id="quotaBanner">
+          <div class="quota-info">
+            <i class="fa-solid fa-sparkles quota-icon"></i>
+            <div>
+              <strong id="quotaTitle">Free Practice Tier</strong>
+              <p id="quotaDesc">You have <span id="quotaCount">20</span> free AI spoken sessions left.</p>
+            </div>
+          </div>
+          <button class="btn-quota-upgrade" onclick="navigateTo('pricing')">Get Unlimited Pro →</button>
+        </div>
+
+        <div class="tutor-grid">
+          <!-- Left Column: Input Panel (Voice Mic & Text Input) -->
+          <div class="tutor-card input-card">
+            <!-- Mode Switcher Tabs -->
+            <div class="mode-tabs">
+              <button class="mode-tab active" id="modeBtnVoice" onclick="setTutorMode('voice')">
+                <i class="fa-solid fa-microphone"></i>
+                <span>Voice Practice</span>
+              </button>
+              <button class="mode-tab" id="modeBtnText" onclick="setTutorMode('text')">
+                <i class="fa-solid fa-keyboard"></i>
+                <span>Type Hindi/Hinglish</span>
+              </button>
+            </div>
+
+            <!-- Voice Mic Mode Content -->
+            <div class="mode-panel active" id="voicePanel">
+              <div class="mic-stage">
+                <!-- Audio Visualizer Canvas -->
+                <canvas id="audioVisualizer" class="visualizer-canvas"></canvas>
+
+                <!-- Glowing Pulse Ring & Record Button -->
+                <div class="mic-button-wrapper">
+                  <div class="mic-pulse-ring" id="micPulseRing"></div>
+                  <button class="mic-main-button" id="micBtn" onclick="toggleRecording()">
+                    <i class="fa-solid fa-microphone" id="micIcon"></i>
+                  </button>
+                </div>
+
+                <div class="mic-status-label" id="micStatusLabel">Tap microphone & speak in Hindi</div>
+                <div class="recording-timer hidden" id="recordingTimer">00:00</div>
+              </div>
+
+              <!-- Quick Hints & Language info -->
+              <div class="mic-tips">
+                <div class="tip-pill"><i class="fa-solid fa-circle-check"></i> Pure Hindi or Hinglish allowed</div>
+                <div class="tip-pill"><i class="fa-solid fa-headphones"></i> High-quality audio analysis</div>
+              </div>
+            </div>
+
+            <!-- Text Input Mode Content -->
+            <div class="mode-panel" id="textPanel">
+              <div class="text-input-wrapper">
+                <label for="textInputHindi" class="input-label">Type in Hindi script or Roman Hinglish:</label>
+                <textarea 
+                  id="textInputHindi" 
+                  class="hindi-textarea" 
+                  rows="4" 
+                  placeholder="e.g. Main kal interview ke liye jaa raha hoon, mujhe thoda darr lag raha hai..."
+                ></textarea>
+              </div>
+
+              <!-- Quick prompt chips -->
+              <div class="quick-prompts">
+                <span class="quick-label">Try saying:</span>
+                <button class="prompt-chip" onclick="applyPrompt('Mujhe aapse milkar bahut khushi hui.')">"Mujhe aapse milkar bahut khushi hui"</button>
+                <button class="prompt-chip" onclick="applyPrompt('Main kal office late pahuncha kyunki traffic tha.')">"Main kal office late pahuncha..."</button>
+                <button class="prompt-chip" onclick="applyPrompt('Kya aap mujhe English seekhne mein madad kar sakte hain?')">"Kya aap madad kar sakte hain?"</button>
+                <button class="prompt-chip" onclick="applyPrompt('Main agle mahine naye project par kaam karunga.')">"Main agle mahine kaam karunga"</button>
+              </div>
+
+              <button class="btn-primary-action" id="btnSubmitText" onclick="submitTextTutor()">
+                <i class="fa-solid fa-paper-plane"></i>
+                <span>Translate & Get AI Coaching</span>
+              </button>
+            </div>
+
+            <!-- Processing Loader -->
+            <div class="tutor-processing hidden" id="tutorLoader">
+              <div class="loader-spinner"></div>
+              <div class="loader-text" id="loaderText">Listening to speech & analyzing with AI...</div>
+            </div>
+          </div>
+
+          <!-- Right Column: AI Coach Results Output -->
+          <div class="tutor-card output-card">
+            <!-- Initial Empty State -->
+            <div class="empty-state" id="tutorEmptyState">
+              <div class="empty-icon">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+              </div>
+              <h3>Your AI Coach is Ready</h3>
+              <p>Speak or type a Hindi sentence on the left to see the instant translation, pronunciation audio, and grammar breakdown.</p>
+            </div>
+
+            <!-- Real Results Container -->
+            <div class="results-container hidden" id="tutorResultContainer">
+              
+              <!-- 1. Hindi Transcription -->
+              <div class="result-box hindi-box">
+                <div class="box-header">
+                  <span class="box-tag hindi-tag"><i class="fa-solid fa-comment-dots"></i> You Said (Hindi)</span>
+                  <button class="btn-icon-copy" onclick="copyText('resHindiText')" title="Copy Hindi"><i class="fa-regular fa-copy"></i></button>
+                </div>
+                <div class="box-content hindi-content" id="resHindiText">--</div>
+              </div>
+
+              <!-- 2. English Corrected Translation with Audio TTS -->
+              <div class="result-box english-box">
+                <div class="box-header">
+                  <span class="box-tag english-tag"><i class="fa-solid fa-star"></i> Perfect English Translation</span>
+                  <button class="btn-icon-copy" onclick="copyText('resEnglishText')" title="Copy English"><i class="fa-regular fa-copy"></i></button>
+                </div>
+                <div class="box-content english-content" id="resEnglishText">--</div>
+
+                <!-- Native Audio Pronunciation Player -->
+                <div class="audio-player-bar" id="audioPlayerBar">
+                  <button class="btn-play-audio" id="btnPlayAudio" onclick="toggleAudioPlayback()">
+                    <i class="fa-solid fa-volume-high" id="audioPlayIcon"></i>
+                    <span id="audioPlayLabel">Listen Native Pronunciation</span>
+                  </button>
+                  <span class="audio-badge">Native AI Voice</span>
+                </div>
+              </div>
+
+              <!-- 3. Hindi Explanation of Grammar Rules -->
+              <div class="result-box explanation-box">
+                <div class="box-header">
+                  <span class="box-tag explanation-tag"><i class="fa-solid fa-lightbulb"></i> Grammar Explanation (Hindi Mein)</span>
+                </div>
+                <div class="box-content explanation-content" id="resExplanation">--</div>
+              </div>
+
+              <!-- 4. Practice Sentence Challenge -->
+              <div class="result-box practice-box">
+                <div class="box-header">
+                  <span class="box-tag practice-tag"><i class="fa-solid fa-bullseye"></i> Next Practice Challenge</span>
+                </div>
+                <div class="box-content practice-content" id="resPractice">--</div>
+              </div>
+
+              <!-- 5. Coach Encouragement -->
+              <div class="coach-encouragement-card" id="resEncouragement">
+                <i class="fa-solid fa-award"></i>
+                <span id="resEncouragementText">Great effort! Keep practicing every day.</span>
+              </div>
+
+              <!-- Action button to practice again -->
+              <div class="result-actions">
+                <button class="btn-secondary-action" onclick="resetTutorState()">
+                  <i class="fa-solid fa-rotate-left"></i> Practice Another Sentence
+                </button>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================================================= -->
+      <!-- VIEW 2: GRAMMAR EXPLORER -->
+      <!-- ========================================================================= -->
+      <section class="view-section" id="view-grammar">
+        <div class="section-hero">
+          <h1 class="hero-title">English <span class="gradient-text">Grammar Explorer</span></h1>
+          <p class="hero-subtitle">Learn complex grammar rules in simple Hindi with real-life examples and pro tips.</p>
+        </div>
+
+        <div class="grammar-search-wrapper">
+          <div class="search-bar">
+            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+            <input 
+              type="text" 
+              id="grammarSearchInput" 
+              placeholder="Search grammar topic (e.g. Past Continuous Tense, Prepositions, Passive Voice)..." 
+              onkeydown="if(event.key==='Enter') searchGrammarTopic()"
+            />
+            <button class="btn-search-topic" onclick="searchGrammarTopic()">
+              <span>Explore</span>
+              <i class="fa-solid fa-arrow-right"></i>
+            </button>
+          </div>
+
+          <!-- Suggested Popular Topic Chips -->
+          <div class="grammar-topic-chips">
+            <span class="chips-label">Popular Topics:</span>
+            <button class="grammar-chip active" onclick="loadGrammarTopic('Tenses')">Tenses (Past, Present, Future)</button>
+            <button class="grammar-chip" onclick="loadGrammarTopic('Prepositions')">Prepositions (in, on, at, by)</button>
+            <button class="grammar-chip" onclick="loadGrammarTopic('Active and Passive Voice')">Active & Passive Voice</button>
+            <button class="grammar-chip" onclick="loadGrammarTopic('Articles')">Articles (A, An, The)</button>
+            <button class="grammar-chip" onclick="loadGrammarTopic('Modals')">Modal Verbs (Can, Could, Should)</button>
+            <button class="grammar-chip" onclick="loadGrammarTopic('Direct and Indirect Speech')">Reported Speech</button>
+            <button class="grammar-chip" onclick="loadGrammarTopic('Conditional Sentences')">Conditionals (If Clauses)</button>
+          </div>
+        </div>
+
+        <!-- Grammar Loading Indicator -->
+        <div class="grammar-loader hidden" id="grammarLoader">
+          <div class="loader-spinner"></div>
+          <p>Generating bilingual grammar explanation & examples...</p>
+        </div>
+
+        <!-- Grammar Topic Details Display -->
+        <div class="grammar-detail-container" id="grammarDetails">
+          <!-- Overview Card -->
+          <div class="grammar-card header-card">
+            <div class="topic-meta">
+              <span class="difficulty-badge" id="gTopicDifficulty">Intermediate</span>
+              <span class="topic-badge">VocalBharat Grammar Guide</span>
+            </div>
+            <h2 class="topic-title" id="gTopicTitle">Tenses (Past, Present, Future)</h2>
+            
+            <div class="definition-split">
+              <div class="def-box english-def">
+                <h4><i class="fa-solid fa-book-open"></i> English Definition</h4>
+                <p id="gEnglishDef">Tenses indicate the time of an action or state of being. They show whether something happens in the present, happened in the past, or will happen in the future.</p>
+              </div>
+              <div class="def-box hindi-def">
+                <h4><i class="fa-solid fa-language"></i> Hindi Explanation (सरल भाषा में)</h4>
+                <p id="gHindiDef">Tense यानी 'काल' यह बताता है कि कोई क्रिया किस समय में हुई - भूतकाल (Past), वर्तमान काल (Present), या भविष्य काल (Future)।</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Examples Section -->
+          <div class="grammar-card examples-card">
+            <h3 class="card-heading"><i class="fa-solid fa-list-check"></i> Real-Life Examples & Usage</h3>
+            <div class="examples-grid" id="gExamplesGrid">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+          <!-- Pro Tips & Common Mistakes -->
+          <div class="grammar-card tips-card">
+            <h3 class="card-heading"><i class="fa-solid fa-lightbulb"></i> Pro Tips & Common Mistakes To Avoid</h3>
+            <div class="tips-list" id="gTipsList">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================================================= -->
+      <!-- VIEW 3: PLANS & PRICING + RAZORPAY CHECKOUT -->
+      <!-- ========================================================================= -->
+      <section class="view-section" id="view-pricing">
+        <div class="section-hero">
+          <h1 class="hero-title">Simple, Transparent <span class="gradient-text">Pricing</span></h1>
+          <p class="hero-subtitle">Upgrade to unlimited AI voice translation, high-fidelity audio coaching, and zero interruptions.</p>
+        </div>
+
+        <!-- Current Subscription Status Pill Card -->
+        <div class="subscription-status-card" id="subscriptionStatusBox">
+          <div class="sub-status-header">
+            <div class="status-indicator">
+              <span class="status-dot green" id="subStatusDot"></span>
+              <span class="status-badge-text" id="subStatusText">Free Starter Plan</span>
+            </div>
+            <span class="user-email-tag" id="subUserEmail">Guest Learner</span>
+          </div>
+
+          <div class="quota-progress-container">
+            <div class="progress-labels">
+              <span id="progressLabelLeft">Usage: 0 / 20 requests used</span>
+              <span id="progressLabelRight">20 remaining</span>
+            </div>
+            <div class="progress-bar-bg">
+              <div class="progress-bar-fill" id="progressBarFill" style="width: 0%;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pricing Cards Grid -->
+        <div class="pricing-grid">
+          <!-- Free Plan -->
+          <div class="pricing-card free-card">
+            <div class="plan-header">
+              <span class="plan-type-badge">Free Starter</span>
+              <h3 class="plan-name">20 Free Practice Sessions</h3>
+              <p class="plan-tagline">Great for trying out spoken Hindi to English AI coaching.</p>
+            </div>
+            <div class="plan-price">
+              <span class="price-val">₹0</span>
+              <span class="price-period">/ forever</span>
+            </div>
+            <ul class="plan-features">
+              <li><i class="fa-solid fa-check"></i> 20 Free spoken voice/text sessions</li>
+              <li><i class="fa-solid fa-check"></i> Instant Hindi to English translation</li>
+              <li><i class="fa-solid fa-check"></i> Basic grammar feedback</li>
+              <li><i class="fa-solid fa-check"></i> Access to Grammar Explorer</li>
+              <li class="disabled"><i class="fa-solid fa-xmark"></i> Unlimited daily practice</li>
+              <li class="disabled"><i class="fa-solid fa-xmark"></i> Priority AI compute</li>
+            </ul>
+            <button class="btn-plan-action btn-free-active" id="btnFreePlan" onclick="navigateTo('tutor')">
+              <span>Start Free Practice</span>
+            </button>
+          </div>
+
+          <!-- Monthly Pro Plan (Featured) -->
+          <div class="pricing-card pro-card">
+            <div class="popular-ribbon">⭐ Recommended</div>
+            <div class="plan-header">
+              <span class="plan-type-badge pro-badge">Pro Unlimited</span>
+              <h3 class="plan-name">Monthly Pro Plan</h3>
+              <p class="plan-tagline">Master spoken English fluency with unlimited practice & coaching.</p>
+            </div>
+            <div class="plan-price">
+              <span class="price-val">₹300</span>
+              <span class="price-period">/ month (30 days)</span>
+            </div>
+            <ul class="plan-features">
+              <li><i class="fa-solid fa-check check-highlight"></i> <strong>Unlimited AI Spoken & Voice Sessions</strong></li>
+              <li><i class="fa-solid fa-check check-highlight"></i> <strong>Native AI Audio Pronunciation (TTS)</strong></li>
+              <li><i class="fa-solid fa-check check-highlight"></i> <strong>Deep Bilingual Grammar Breakdowns</strong></li>
+              <li><i class="fa-solid fa-check check-highlight"></i> <strong>Full Grammar Explorer with Practice Quizzes</strong></li>
+              <li><i class="fa-solid fa-check check-highlight"></i> <strong>Cross-device Sync (Web + Android App)</strong></li>
+              <li><i class="fa-solid fa-check check-highlight"></i> <strong>Zero Advertisements & Priority Compute</strong></li>
+            </ul>
+
+            <!-- Checkout Trigger Button -->
+            <button class="btn-plan-action btn-pro-checkout" id="btnProCheckout" onclick="startCheckoutFlow()">
+              <i class="fa-solid fa-lock"></i>
+              <span id="btnPayText">Upgrade to Monthly Pro (₹300)</span>
+              <span class="spinner hidden" id="checkoutSpinner"></span>
+            </button>
+
+            <!-- Test mode helper / Simulated Payment Button -->
+            <div class="dev-checkout-helper">
+              <button class="btn-simulated-pay" onclick="startSimulatedPayment()" title="Simulate payment confirmation without external gateway">
+                <i class="fa-solid fa-flask"></i> Instant Test / Simulated Activation (Dev)
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Security & Payment Methods Trust Strip -->
+        <div class="trust-strip">
+          <div class="trust-item"><i class="fa-solid fa-shield-halved"></i> 256-Bit SSL Encrypted</div>
+          <div class="trust-item"><i class="fa-solid fa-credit-card"></i> UPI, Google Pay, PhonePe, Cards, NetBanking</div>
+          <div class="trust-item"><i class="fa-solid fa-bolt"></i> Instant Automated Activation</div>
+          <div class="trust-item"><i class="fa-solid fa-mobile-screen"></i> Access on Web & Android App</div>
+        </div>
+      </section>
+
+      <!-- ========================================================================= -->
+      <!-- VIEW 4: FEEDBACK FORM -->
+      <!-- ========================================================================= -->
+      <section class="view-section" id="view-feedback">
+        <div class="section-hero">
+          <h1 class="hero-title">Share Your <span class="gradient-text">Feedback</span></h1>
+          <p class="hero-subtitle">Help us improve VocalBharat! Your feedback goes directly to the developer.</p>
+        </div>
+
+        <div class="form-page-container">
+          <!-- Left: Info -->          
+          <div class="form-info-panel">
+            <div class="info-icon-block">
+              <i class="fa-solid fa-star"></i>
+            </div>
+            <h3>We value your feedback</h3>
+            <p>Your thoughts help us make VocalBharat better for everyone. Whether it's a feature you love, something to improve, or a bug — we want to hear it all.</p>
+            <div class="info-feature-list">
+              <div class="info-feature-item">
+                <i class="fa-solid fa-bolt"></i>
+                <span>Reviewed by the developer personally</span>
+              </div>
+              <div class="info-feature-item">
+                <i class="fa-solid fa-envelope"></i>
+                <span>We reply within 24–48 hours</span>
+              </div>
+              <div class="info-feature-item">
+                <i class="fa-solid fa-shield-halved"></i>
+                <span>Your info stays private & secure</span>
+              </div>
+            </div>
+            <div class="contact-direct-box">
+              <p>Or email us directly:</p>
+              <a href="mailto:aarifkhan.tech@gmail.com" class="contact-email-link">
+                <i class="fa-solid fa-envelope"></i>
+                aarifkhan.tech@gmail.com
+              </a>
+            </div>
+          </div>
+
+          <!-- Right: Feedback Form -->
+          <div class="form-card">
+            <div id="feedbackSuccess" class="form-success-box hidden">
+              <div class="success-icon"><i class="fa-solid fa-circle-check"></i></div>
+              <h3>Thank You!</h3>
+              <p id="feedbackSuccessMsg">Your feedback has been submitted successfully.</p>
+              <p class="ticket-id-display" id="feedbackTicketId"></p>
+              <button class="btn-primary-action" onclick="resetFeedbackForm()" style="margin-top:16px;">
+                <i class="fa-solid fa-plus"></i> Submit Another Feedback
+              </button>
+            </div>
+
+            <div id="feedbackFormBody">
+              <h3 class="form-card-title">Rate Your Experience</h3>
+
+              <!-- Star Rating -->
+              <div class="star-rating-container">
+                <p class="star-label">Overall Rating <span class="required-mark">*</span></p>
+                <div class="star-row" id="starRow">
+                  <span class="star" data-value="1" onclick="setRating(1)">★</span>
+                  <span class="star" data-value="2" onclick="setRating(2)">★</span>
+                  <span class="star" data-value="3" onclick="setRating(3)">★</span>
+                  <span class="star" data-value="4" onclick="setRating(4)">★</span>
+                  <span class="star" data-value="5" onclick="setRating(5)">★</span>
+                </div>
+                <p class="star-hint" id="starHint">Click a star to rate</p>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="fbName">Your Name <span class="required-mark">*</span></label>
+                  <input type="text" id="fbName" placeholder="e.g. Rahul Sharma" required />
+                </div>
+                <div class="form-group">
+                  <label for="fbEmail">Email Address <span class="required-mark">*</span></label>
+                  <input type="email" id="fbEmail" placeholder="name@example.com" required />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="fbCategory">Feedback Category <span class="required-mark">*</span></label>
+                <select id="fbCategory" class="form-select">
+                  <option value="general">General Feedback</option>
+                  <option value="feature">Feature Request</option>
+                  <option value="bug">Bug Report</option>
+                  <option value="praise">Praise / Love it!</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="fbMessage">Your Feedback <span class="required-mark">*</span></label>
+                <textarea id="fbMessage" rows="5" placeholder="Tell us what you think about VocalBharat, what you'd like to see improved, or what you love most..." required></textarea>
+              </div>
+
+              <button class="btn-primary-action" id="btnSubmitFeedback" onclick="submitFeedback()">
+                <i class="fa-solid fa-paper-plane"></i>
+                <span id="feedbackBtnText">Submit Feedback</span>
+                <span class="spinner hidden" id="feedbackSpinner"></span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================================================= -->
+      <!-- VIEW 5: HELP & SUPPORT PAGE -->
+      <!-- ========================================================================= -->
+      <section class="view-section" id="view-help">
+        <div class="section-hero">
+          <h1 class="hero-title">Help &amp; <span class="gradient-text">Support</span></h1>
+          <p class="hero-subtitle">Having trouble? We're here to help. Describe your issue and we'll get back to you quickly.</p>
+        </div>
+
+        <div class="help-page-wrapper">
+          <!-- FAQ Cards -->
+          <div class="faq-grid">
+            <h2 class="faq-section-title"><i class="fa-solid fa-circle-question"></i> Common Questions</h2>
+            <div class="faq-cards">
+              <div class="faq-card" onclick="toggleFaq(this)">
+                <div class="faq-question">Why is the microphone not working? <i class="fa-solid fa-chevron-down faq-arrow"></i></div>
+                <div class="faq-answer">Please allow microphone permission in your browser or Android settings. On Chrome, click the lock icon in the address bar → Site Settings → Microphone → Allow.</div>
+              </div>
+              <div class="faq-card" onclick="toggleFaq(this)">
+                <div class="faq-question">My payment went through but Pro is not active? <i class="fa-solid fa-chevron-down faq-arrow"></i></div>
+                <div class="faq-answer">Please sign in with the same email used during payment. If the issue persists, use the Help form below with your payment ID and we will activate it manually within 2 hours.</div>
+              </div>
+              <div class="faq-card" onclick="toggleFaq(this)">
+                <div class="faq-question">How do I cancel my subscription? <i class="fa-solid fa-chevron-down faq-arrow"></i></div>
+                <div class="faq-answer">Your subscription is for 30 days and does not auto-renew. No action is needed to cancel. Just don't pay again next month.</div>
+              </div>
+              <div class="faq-card" onclick="toggleFaq(this)">
+                <div class="faq-question">The translation is wrong or AI is not responding? <i class="fa-solid fa-chevron-down faq-arrow"></i></div>
+                <div class="faq-answer">Check that the backend server is Online (green dot top right). If offline, the server may be restarting. Wait 30 seconds and try again. If the issue persists, file a Help request below.</div>
+              </div>
+              <div class="faq-card" onclick="toggleFaq(this)">
+                <div class="faq-question">Can I use it offline or without internet? <i class="fa-solid fa-chevron-down faq-arrow"></i></div>
+                <div class="faq-answer">No, VocalBharat requires an internet connection as AI translation and grammar analysis are done on the cloud server in real time.</div>
+              </div>
+              <div class="faq-card" onclick="toggleFaq(this)">
+                <div class="faq-question">How do I get a refund? <i class="fa-solid fa-chevron-down faq-arrow"></i></div>
+                <div class="faq-answer">Refunds are handled case by case. Email aarifkhan.tech@gmail.com with your Razorpay payment ID and reason within 7 days of purchase.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Help Request Form -->
+          <div class="help-form-panel">
+            <h2 class="faq-section-title"><i class="fa-solid fa-headset"></i> Contact Support</h2>
+
+            <div id="helpSuccess" class="form-success-box hidden">
+              <div class="success-icon help-icon"><i class="fa-solid fa-circle-check"></i></div>
+              <h3>Help Request Received!</h3>
+              <p id="helpSuccessMsg">We've received your request and will reply to your email within 24 hours.</p>
+              <p class="ticket-id-display" id="helpTicketId"></p>
+              <button class="btn-primary-action" onclick="resetHelpForm()" style="margin-top:16px;">
+                <i class="fa-solid fa-plus"></i> Submit Another Request
+              </button>
+            </div>
+
+            <div id="helpFormBody">
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="helpName">Your Name <span class="required-mark">*</span></label>
+                  <input type="text" id="helpName" placeholder="e.g. Priya Sharma" required />
+                </div>
+                <div class="form-group">
+                  <label for="helpEmail">Email Address <span class="required-mark">*</span></label>
+                  <input type="email" id="helpEmail" placeholder="name@example.com" required />
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="helpIssueType">Issue Type <span class="required-mark">*</span></label>
+                  <select id="helpIssueType" class="form-select">
+                    <option value="payment">Payment / Subscription</option>
+                    <option value="account">Account / Login</option>
+                    <option value="technical">Technical / App not working</option>
+                    <option value="audio">Audio / Microphone</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="helpDevice">Device</label>
+                  <select id="helpDevice" class="form-select">
+                    <option value="web">Web Browser</option>
+                    <option value="android">Android App</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="helpSubject">Subject / Short Summary <span class="required-mark">*</span></label>
+                <input type="text" id="helpSubject" placeholder="e.g. Payment went through but Pro not activated" required />
+              </div>
+
+              <div class="form-group">
+                <label for="helpDescription">Describe Your Issue in Detail <span class="required-mark">*</span></label>
+                <textarea id="helpDescription" rows="6" placeholder="Please describe exactly what happened, any error messages you saw, and steps you tried. The more detail, the faster we can help you." required></textarea>
+              </div>
+
+              <button class="btn-help-submit" id="btnSubmitHelp" onclick="submitHelp()">
+                <i class="fa-solid fa-headset"></i>
+                <span id="helpBtnText">Send Help Request</span>
+                <span class="spinner hidden" id="helpSpinner"></span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <div class="footer-container">
+        <div class="footer-brand">
+          <div class="brand-title">VocalBharat</div>
+          <p>AI-Powered Spoken English Tutor for Hindi Speakers</p>
+        </div>
+        <div class="footer-links">
+          <a href="/docs" target="_blank"><i class="fa-solid fa-code"></i> API Docs</a>
+          <a href="#tutor" onclick="navigateTo('tutor')">AI Tutor</a>
+          <a href="#grammar" onclick="navigateTo('grammar')">Grammar</a>
+          <a href="#pricing" onclick="navigateTo('pricing')">Pricing</a>
+          <a href="#feedback" onclick="navigateTo('feedback')">Feedback</a>
+          <a href="#help" onclick="navigateTo('help')">Help</a>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODALS -->
+  <!-- ========================================================================= -->
+
+  <!-- Account / OTP Login Modal -->
+  <div class="modal-overlay hidden" id="accountModal">
+    <div class="modal-card">
+      <button class="modal-close-btn" onclick="closeAccountModal()"><i class="fa-solid fa-xmark"></i></button>
+
+      <!-- View when Logged Out: Step 1 Enter Email -->
+      <div class="auth-step active" id="authStepEmail">
+        <div class="modal-header">
+          <div class="modal-icon"><i class="fa-solid fa-envelope-open-text"></i></div>
+          <h3>Sign in with Email</h3>
+          <p>Enter your email to receive an instant OTP code for login or registration.</p>
+        </div>
+        <form onsubmit="event.preventDefault(); requestOtp();">
+          <div class="form-group">
+            <label for="authEmailInput">Email Address</label>
+            <input type="email" id="authEmailInput" placeholder="name@example.com" required />
+          </div>
+          <button type="submit" class="btn-primary-action" id="btnRequestOtp">
+            <span>Send 6-Digit OTP</span>
+            <i class="fa-solid fa-paper-plane"></i>
+          </button>
+        </form>
+      </div>
+
+      <!-- View when Logged Out: Step 2 Enter OTP -->
+      <div class="auth-step" id="authStepOtp">
+        <div class="modal-header">
+          <div class="modal-icon"><i class="fa-solid fa-key"></i></div>
+          <h3>Enter Verification Code</h3>
+          <p>We sent an OTP code to <strong id="authTargetEmail">your email</strong></p>
+        </div>
+        <form onsubmit="event.preventDefault(); verifyOtp();">
+          <div class="form-group">
+            <label for="authOtpInput">6-Digit Code</label>
+            <input type="text" id="authOtpInput" class="otp-input" placeholder="123456" maxlength="6" pattern="[0-9]{6}" required />
+          </div>
+          <button type="submit" class="btn-primary-action" id="btnVerifyOtp">
+            <span>Verify & Log In</span>
+            <i class="fa-solid fa-arrow-right"></i>
+          </button>
+          <button type="button" class="btn-text-action" onclick="resetAuthModal()">← Use a different email</button>
+        </form>
+      </div>
+
+      <!-- View when Logged In: Profile Dashboard -->
+      <div class="auth-step" id="authStepProfile">
+        <div class="modal-header">
+          <div class="modal-avatar"><i class="fa-solid fa-user-check"></i></div>
+          <h3 id="profileUserEmail">user@example.com</h3>
+          <p class="profile-status-text" id="profilePlanBadge">Active Plan: Free Tier</p>
+        </div>
+        <div class="profile-details">
+          <div class="profile-stat-row">
+            <span>Remaining Requests</span>
+            <strong id="profileRequestsCount">20 left</strong>
+          </div>
+          <div class="profile-stat-row">
+            <span>Subscription Status</span>
+            <strong id="profileSubStatus">Free Tier</strong>
+          </div>
+        </div>
+        <div class="profile-actions">
+          <button class="btn-primary-action" onclick="closeAccountModal(); navigateTo('pricing');">
+            <i class="fa-solid fa-bolt"></i> Upgrade Plan
+          </button>
+          <button class="btn-secondary-action" onclick="logoutUser()">
+            <i class="fa-solid fa-right-from-bracket"></i> Sign Out
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Application Logic -->
+  <script src="/static/app.js"></script>
+</body>
+</html>

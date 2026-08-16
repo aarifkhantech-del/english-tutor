@@ -4,6 +4,7 @@ from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
@@ -15,10 +16,14 @@ from app.api.routes import (
     grammar_router,
     auth_router,
     subscription_router,
+    payment_router,
+    feedback_router,
 )
 from app.services.asr_service import asr_service
 from app.services.llm_service import llm_service
 from app.services.grammar_service import grammar_service
+
+STATIC_DIR = Path(__file__).resolve().parent / "static"
 
 # Configure structured logging
 logging.basicConfig(
@@ -89,6 +94,10 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
+    # Mount static assets if directory exists
+    if STATIC_DIR.exists():
+        app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+
     # Register API Routers
     app.include_router(health_router)
     app.include_router(transcribe_router)
@@ -96,9 +105,12 @@ def create_app() -> FastAPI:
     app.include_router(grammar_router, prefix="/grammar")
     app.include_router(auth_router)
     app.include_router(subscription_router)
+    app.include_router(payment_router)
+    app.include_router(feedback_router)
 
     return app
 
 
 app = create_app()
+
 

@@ -1,13 +1,16 @@
 package com.englishtutor.app
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.browser.customtabs.CustomTabsIntent
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
@@ -38,33 +41,44 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.englishtutor.app.data.model.InitiatePaymentOut
 import com.englishtutor.app.ui.AuthViewModel
 import com.englishtutor.app.ui.GrammarViewModel
 import com.englishtutor.app.ui.SubscriptionViewModel
 import com.englishtutor.app.ui.TutorViewModel
+import com.englishtutor.app.ui.FeedbackViewModel
 import com.englishtutor.app.ui.components.*
+import com.englishtutor.app.ui.screens.FeedbackScreen
+import com.englishtutor.app.ui.screens.HelpScreen
 import com.englishtutor.app.ui.screens.GrammarScreen
 import com.englishtutor.app.ui.screens.LoginScreen
 import com.englishtutor.app.ui.screens.SubscriptionScreen
 import com.englishtutor.app.ui.theme.*
+import com.razorpay.Checkout
+import com.razorpay.PaymentData
+import com.razorpay.PaymentResultWithDataListener
 import kotlinx.coroutines.launch
+import org.json.JSONObject
 
 // ── Navigation Destinations ─────────────────────────────────────────────────
 sealed class Screen(val route: String, val label: String, val icon: ImageVector) {
     object Home         : Screen("home",         "Hindi to English", Icons.Default.Translate)
     object Grammar      : Screen("grammar",      "Grammar",          Icons.Default.School)
-    object Subscription : Screen("subscription", "Plans & ₹5 Trial", Icons.Default.Stars)
+    object Subscription : Screen("subscription", "Plans & Pricing",  Icons.Default.Stars)
     object Login        : Screen("login",        "My Account",       Icons.Default.AccountCircle)
+    object Feedback     : Screen("feedback",     "Feedback",         Icons.Default.Star)
+    object Help         : Screen("help",         "Help & Support",   Icons.Default.SupportAgent)
 }
 
-private val screens = listOf(Screen.Home, Screen.Grammar, Screen.Subscription, Screen.Login)
+private val screens = listOf(Screen.Home, Screen.Grammar, Screen.Subscription, Screen.Feedback, Screen.Help, Screen.Login)
 
-class MainActivity : ComponentActivity() {
+class MainActivity : ComponentActivity(), PaymentResultWithDataListener {
 
     private val tutorViewModel: TutorViewModel by viewModels()
     private val grammarViewModel: GrammarViewModel by viewModels()
     private val authViewModel: AuthViewModel by viewModels()
     private val subscriptionViewModel: SubscriptionViewModel by viewModels()
+    private val feedbackViewModel: FeedbackViewModel by viewModels()
 
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -82,6 +96,13 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Preload Razorpay Checkout resources
+        try {
+            Checkout.preload(applicationContext)
+        } catch (_: Exception) {
+        }
+
         setContent {
             EnglishTutorTheme {
                 AppShell(
@@ -89,8 +110,15 @@ class MainActivity : ComponentActivity() {
                     grammarViewModel = grammarViewModel,
                     authViewModel = authViewModel,
                     subscriptionViewModel = subscriptionViewModel,
+                    feedbackViewModel = feedbackViewModel,
                     onRequestTutorMic = { checkAndRequestPermission() },
-                    onRequestGrammarMic = { checkGrammarPermission() }
+                    onRequestGrammarMic = { checkGrammarPermission() },
+                    onStartRazorpayPayment = { orderOut ->
+                        startRazorpayPayment(orderOut, authViewModel.uiState.value.userEmail)
+                    },
+                    onOpenWebCheckout = { url ->
+                        openWebCheckout(url)
+                    }
                 )
             }
         }
@@ -107,6 +135,84 @@ class MainActivity : ComponentActivity() {
             grammarViewModel.startVoiceRecognition()
         else grammarPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
     }
+
+    fun startRazorpayPayment(orderOut: InitiatePaymentOut, userEmail: String?) {
+        val checkout = Checkout()
+        val key = orderOut.gatewayKey?.trim() ?: ""
+        if (key.isEmpty()) {
+            Toast.makeText(this, "Razorpay Key is not configured on the backend server.", Toast.LENGTH_LONG).show()
+            val serverUrl = tutorViewModel.uiState.value.serverUrl
+            openWebCheckout("$serverUrl/checkout")
+            return
+        }
+        checkout.setKeyID(key)
+
+
+        try {
+            val options = JSONObject()
+            options.put("name", "VocalBharat")
+            options.put("description", "Spoken English Monthly Pro")
+            options.put("image", "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f399.png")
+            options.put("theme.color", "#2979FF")
+            options.put("order_id", orderOut.orderId)
+            options.put("currency", orderOut.currency)
+            options.put("amount", orderOut.amount * 100) // Razorpay expects amount in paise
+
+            val prefill = JSONObject()
+            if (!userEmail.isNullOrBlank()) {
+                prefill.put("email", userEmail)
+            }
+            options.put("prefill", prefill)
+
+            val retryObj = JSONObject()
+            retryObj.put("enabled", true)
+            retryObj.put("max_count", 2)
+            options.put("retry", retryObj)
+
+            checkout.open(this, options)
+        } catch (e: Exception) {
+            Toast.makeText(this, "Launching Web Checkout: ${e.message}", Toast.LENGTH_SHORT).show()
+            val serverUrl = tutorViewModel.uiState.value.serverUrl
+            openWebCheckout("$serverUrl/checkout")
+        }
+    }
+
+    fun openWebCheckout(url: String) {
+        try {
+            val customTabsIntent = CustomTabsIntent.Builder()
+                .setShowTitle(true)
+                .build()
+            customTabsIntent.launchUrl(this, Uri.parse(url))
+        } catch (_: Exception) {
+            val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+            startActivity(browserIntent)
+        }
+    }
+
+    // ── Razorpay Payment Callbacks ───────────────────────────────────────────
+
+    override fun onPaymentSuccess(razorpayPaymentId: String?, paymentData: PaymentData?) {
+        val orderId = paymentData?.orderId
+        val paymentId = paymentData?.paymentId ?: razorpayPaymentId
+        val signature = paymentData?.signature
+
+        val serverUrl = tutorViewModel.uiState.value.serverUrl
+        if (orderId != null && paymentId != null) {
+            subscriptionViewModel.confirmCompletedPayment(
+                serverUrl = serverUrl,
+                orderId = orderId,
+                paymentId = paymentId,
+                signature = signature
+            )
+        } else {
+            Toast.makeText(this, "Payment successful (ID: $razorpayPaymentId)", Toast.LENGTH_LONG).show()
+            subscriptionViewModel.loadPlansAndStatus(serverUrl)
+        }
+    }
+
+    override fun onPaymentError(code: Int, response: String?, paymentData: PaymentData?) {
+        subscriptionViewModel.onPaymentFailed(response ?: "Payment cancelled or failed (code $code)")
+    }
 }
 
 // ── App Shell with Drawer ────────────────────────────────────────────────────
@@ -117,8 +223,11 @@ fun AppShell(
     grammarViewModel: GrammarViewModel,
     authViewModel: AuthViewModel,
     subscriptionViewModel: SubscriptionViewModel,
+    feedbackViewModel: FeedbackViewModel,
     onRequestTutorMic: () -> Unit,
-    onRequestGrammarMic: () -> Unit
+    onRequestGrammarMic: () -> Unit,
+    onStartRazorpayPayment: (InitiatePaymentOut) -> Unit,
+    onOpenWebCheckout: (String) -> Unit
 ) {
     val navController = rememberNavController()
     val drawerState = rememberDrawerState(DrawerValue.Closed)
@@ -183,11 +292,13 @@ fun AppShell(
                         Column {
                             Text(
                                 text = when (currentRoute) {
-                                    Screen.Grammar.route      -> "Grammar Explorer"
-                                    Screen.Subscription.route -> "Plans & Pricing"
-                                    Screen.Login.route        -> "My Account"
-                                    Screen.Home.route         -> "Hindi to English"
-                                    else -> "VocalBharat"
+                                     Screen.Grammar.route      -> "Grammar Explorer"
+                                     Screen.Subscription.route -> "Plans & Pricing"
+                                     Screen.Login.route        -> "My Account"
+                                     Screen.Feedback.route     -> "Feedback"
+                                     Screen.Help.route         -> "Help & Support"
+                                     Screen.Home.route         -> "Hindi to English"
+                                     else -> "VocalBharat"
                                 },
                                 color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.Bold
                             )
@@ -213,10 +324,10 @@ fun AppShell(
                                 .clip(RoundedCornerShape(100.dp))
                                 .background(Color(0xFF00E676).copy(alpha = 0.15f))
                                 .border(1.dp, Color(0xFF00E676).copy(alpha = 0.4f), RoundedCornerShape(100.dp))
-                                .clickable { navController.navigate(Screen.Subscription.route) }
-                                .padding(horizontal = 10.dp, vertical = 5.dp)
+                            .clickable { navController.navigate(Screen.Subscription.route) }
+                            .padding(horizontal = 10.dp, vertical = 5.dp)
                         ) {
-                            Text("₹5 Trial", color = Color(0xFF00E676), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            Text("Upgrade Pro", color = Color(0xFF00E676), fontSize = 11.sp, fontWeight = FontWeight.Bold)
                         }
                         Spacer(Modifier.width(8.dp))
                     }
@@ -271,12 +382,19 @@ fun AppShell(
                                     onRequireLogin = {
                                         Toast.makeText(navController.context, "Please sign in first", Toast.LENGTH_SHORT).show()
                                         navController.navigate(Screen.Login.route)
+                                    },
+                                    onLaunchRazorpay = { orderOut ->
+                                        onStartRazorpayPayment(orderOut)
                                     }
                                 )
                             },
-                            onNavigateToLogin = { navController.navigate(Screen.Login.route) }
+                            onNavigateToLogin = { navController.navigate(Screen.Login.route) },
+                            onOpenWebCheckout = {
+                                onOpenWebCheckout("${tutorState.serverUrl}/checkout")
+                            }
                         )
                     }
+
                     composable(Screen.Login.route) {
                         LoginScreen(
                             uiState = authState,
@@ -294,6 +412,37 @@ fun AppShell(
                                 subscriptionViewModel.loadPlansAndStatus(tutorState.serverUrl)
                             },
                             onNavigateBack = { navController.navigate(Screen.Home.route) }
+                        )
+                    }
+
+                    composable(Screen.Feedback.route) {
+                        val fbState by feedbackViewModel.feedbackState.collectAsState()
+                        FeedbackScreen(
+                            uiState = fbState,
+                            onNameChange    = { feedbackViewModel.onFeedbackNameChange(it) },
+                            onEmailChange   = { feedbackViewModel.onFeedbackEmailChange(it) },
+                            onRatingChange  = { feedbackViewModel.onFeedbackRatingChange(it) },
+                            onCategoryChange= { feedbackViewModel.onFeedbackCategoryChange(it) },
+                            onMessageChange = { feedbackViewModel.onFeedbackMessageChange(it) },
+                            onSubmit        = { feedbackViewModel.submitFeedback(tutorState.serverUrl) },
+                            onReset         = { feedbackViewModel.resetFeedback() },
+                            onDismissError  = { feedbackViewModel.clearFeedbackError() }
+                        )
+                    }
+
+                    composable(Screen.Help.route) {
+                        val helpState by feedbackViewModel.helpState.collectAsState()
+                        HelpScreen(
+                            uiState             = helpState,
+                            onNameChange        = { feedbackViewModel.onHelpNameChange(it) },
+                            onEmailChange       = { feedbackViewModel.onHelpEmailChange(it) },
+                            onIssueTypeChange   = { feedbackViewModel.onHelpIssueTypeChange(it) },
+                            onSubjectChange     = { feedbackViewModel.onHelpSubjectChange(it) },
+                            onDescriptionChange = { feedbackViewModel.onHelpDescriptionChange(it) },
+                            onDeviceChange      = { feedbackViewModel.onHelpDeviceChange(it) },
+                            onSubmit            = { feedbackViewModel.submitHelp(tutorState.serverUrl) },
+                            onReset             = { feedbackViewModel.resetHelp() },
+                            onDismissError      = { feedbackViewModel.clearHelpError() }
                         )
                     }
                 }

@@ -31,3 +31,5 @@ python-jose[cryptography]>=3.3.0
 passlib[bcrypt]>=1.7.4
 aiosmtplib>=3.0.1
 slowapi>=0.1.9
+razorpay>=1.4.1
+

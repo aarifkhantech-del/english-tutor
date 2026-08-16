@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.englishtutor.app.data.local.SessionManager
+import com.englishtutor.app.data.model.InitiatePaymentOut
 import com.englishtutor.app.data.model.PlanInfo
 import com.englishtutor.app.data.model.SubscriptionStatusOut
 import com.englishtutor.app.data.remote.TutorApiClient
@@ -73,6 +74,7 @@ class SubscriptionViewModel(application: Application) : AndroidViewModel(applica
         serverUrl: String,
         planId: String,
         onRequireLogin: () -> Unit,
+        onLaunchRazorpay: (InitiatePaymentOut) -> Unit,
         onPaymentSuccess: () -> Unit = {}
     ) {
         val token = sessionManager.getAuthToken()
@@ -113,13 +115,9 @@ class SubscriptionViewModel(application: Application) : AndroidViewModel(applica
                         }
                     }
                 } else {
-                    // For Razorpay / other real gateways
-                    _uiState.update {
-                        it.copy(
-                            isProcessingPayment = false,
-                            successMessage = "Order created (${orderOut.orderId}). Opening gateway..."
-                        )
-                    }
+                    // For Razorpay / other real gateways: trigger Checkout sheet
+                    _uiState.update { it.copy(isProcessingPayment = false) }
+                    onLaunchRazorpay(orderOut)
                 }
             }.onFailure { err ->
                 _uiState.update {
@@ -129,6 +127,57 @@ class SubscriptionViewModel(application: Application) : AndroidViewModel(applica
                     )
                 }
             }
+        }
+    }
+
+    fun confirmCompletedPayment(
+        serverUrl: String,
+        orderId: String,
+        paymentId: String,
+        signature: String?,
+        onSuccess: () -> Unit = {}
+    ) {
+        val token = sessionManager.getAuthToken()
+        if (token == null) {
+            _uiState.update { it.copy(errorMessage = "User session expired. Please sign in again.") }
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.update { it.copy(isProcessingPayment = true, errorMessage = null, successMessage = null) }
+            val confirmResult = apiClient.confirmPayment(
+                baseUrl = serverUrl,
+                token = token,
+                orderId = orderId,
+                paymentId = paymentId,
+                signature = signature
+            )
+            confirmResult.onSuccess { newStatus ->
+                _uiState.update {
+                    it.copy(
+                        isProcessingPayment = false,
+                        status = newStatus,
+                        successMessage = "🎉 Payment verified & Monthly Pro activated! Enjoy unlimited AI practice."
+                    )
+                }
+                onSuccess()
+            }.onFailure { err ->
+                _uiState.update {
+                    it.copy(
+                        isProcessingPayment = false,
+                        errorMessage = "Payment verification failed: ${err.message}"
+                    )
+                }
+            }
+        }
+    }
+
+    fun onPaymentFailed(reason: String) {
+        _uiState.update {
+            it.copy(
+                isProcessingPayment = false,
+                errorMessage = "Payment was cancelled or failed: $reason"
+            )
         }
     }
 
