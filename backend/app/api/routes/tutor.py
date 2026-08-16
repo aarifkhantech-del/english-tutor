@@ -1,3 +1,4 @@
+from __future__ import annotations
 import logging
 from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
 from app.models.schemas import TutorResponse, TextTutorRequest

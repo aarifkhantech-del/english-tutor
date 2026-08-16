@@ -1,6 +1,7 @@
-"""JWT creation and verification utilities for the VocalBharat auth system."""
+from __future__ import annotations
 import logging
 from datetime import datetime, timedelta, timezone
+from typing import Any, Optional
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -9,6 +10,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.database import get_db
+from app.models.db_models import User, Subscription
 
 logger = logging.getLogger("english_tutor.security")
 bearer_scheme = HTTPBearer(auto_error=False)

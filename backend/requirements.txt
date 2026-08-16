@@ -5,6 +5,7 @@ python-multipart>=0.0.9
 starlette>=0.37.0
 pydantic>=2.7.0
 pydantic[email]>=2.7.0
+email-validator>=2.0.0
 pydantic-settings>=2.2.0
 
 # HTTP & environment

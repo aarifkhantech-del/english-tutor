@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 Auth API routes — email OTP login system.
 
