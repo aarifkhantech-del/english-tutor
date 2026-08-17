@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -24,14 +25,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.englishtutor.app.data.model.GrammarResponse
 import com.englishtutor.app.ui.GrammarUiState
-import com.englishtutor.app.ui.theme.AccentTeal
-import com.englishtutor.app.ui.theme.RecordingRed
+import com.englishtutor.app.ui.components.ScreenHeader
+import com.englishtutor.app.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GrammarScreen(
     uiState: GrammarUiState,
-    serverUrl: String,
     onTopicChange: (String) -> Unit,
     onExplain: () -> Unit,
     onStartVoice: () -> Unit,
@@ -51,43 +51,40 @@ fun GrammarScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(LightBackground)
             .verticalScroll(scrollState)
-            .padding(horizontal = 20.dp, vertical = 12.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(14.dp)
+            .padding(bottom = 40.dp)
     ) {
+        // ── Header ──────────────────────────────────────────────────────────
+        ScreenHeader(
+            title = "Grammar Explorer",
+            subtitle = "Ask any English grammar topic & get clear Hindi explanations 📚",
+            gradientColors = listOf(AppAccent, AppAccentEnd)
+        )
 
-        // Header
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = "Grammar Explorer",
-                color = Color.White,
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = "कोई भी English Grammar topic पूछें",
-                color = Color.White.copy(alpha = 0.5f),
-                fontSize = 12.sp,
-                textAlign = TextAlign.Center
-            )
-        }
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
 
         // Input Card
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(16.dp))
-                .background(Color.White.copy(alpha = 0.07f))
-                .border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(16.dp))
-                .padding(14.dp),
+                .background(SurfaceDark)
+                .border(1.dp, SurfaceBorder, RoundedCornerShape(16.dp))
+                .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             // Label
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.School, null, tint = AccentTeal, modifier = Modifier.size(16.dp))
+                Icon(Icons.Default.School, null, tint = AppAccent, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(6.dp))
-                Text("Grammar Topic", color = AccentTeal, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                Text("Grammar Topic", color = AppAccent, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
             }
 
             // Text field + mic row
@@ -100,23 +97,28 @@ fun GrammarScreen(
                     value = uiState.topic,
                     onValueChange = onTopicChange,
                     placeholder = {
-                        Text("e.g. Past Tense, Articles, Prepositions...",
-                            color = Color.White.copy(alpha = 0.3f), fontSize = 13.sp)
+                        Text(
+                            "e.g. Past Tense, Articles, Prepositions...",
+                            color = TextMuted,
+                            fontSize = 13.sp
+                        )
                     },
                     modifier = Modifier.weight(1f),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White,
-                        focusedBorderColor = AccentTeal,
-                        unfocusedBorderColor = Color.White.copy(alpha = 0.2f),
-                        cursorColor = AccentTeal
+                        focusedTextColor = TextPrimary,
+                        unfocusedTextColor = TextPrimary,
+                        focusedBorderColor = AppAccent,
+                        unfocusedBorderColor = SurfaceBorder,
+                        cursorColor = AppAccent,
+                        focusedContainerColor = SurfaceDark,
+                        unfocusedContainerColor = SurfaceDark
                     ),
                     shape = RoundedCornerShape(12.dp),
                     singleLine = true,
                     trailingIcon = {
                         if (uiState.topic.isNotEmpty()) {
                             IconButton(onClick = { onTopicChange("") }) {
-                                Icon(Icons.Default.Clear, null, tint = Color.White.copy(alpha = 0.5f))
+                                Icon(Icons.Default.Clear, null, tint = TextMuted)
                             }
                         }
                     }
@@ -132,7 +134,7 @@ fun GrammarScreen(
                             if (uiState.isRecording)
                                 Brush.radialGradient(listOf(RecordingRed, Color(0xFFFF6D00)))
                             else
-                                Brush.radialGradient(listOf(Color(0xFF2979FF), AccentTeal))
+                                Brush.radialGradient(listOf(AppAccent, AppAccentEnd))
                         )
                         .clickable { if (uiState.isRecording) onStopVoice() else onStartVoice() },
                     contentAlignment = Alignment.Center
@@ -160,11 +162,11 @@ fun GrammarScreen(
             Button(
                 onClick = onExplain,
                 enabled = uiState.topic.isNotBlank() && !uiState.isLoading,
-                modifier = Modifier.fillMaxWidth().height(46.dp),
+                modifier = Modifier.fillMaxWidth().height(48.dp),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF2979FF),
-                    disabledContainerColor = Color.White.copy(alpha = 0.1f)
+                    containerColor = AppAccent,
+                    disabledContainerColor = SurfaceBorder
                 )
             ) {
                 if (uiState.isLoading) {
@@ -172,9 +174,9 @@ fun GrammarScreen(
                     Spacer(Modifier.width(8.dp))
                     Text("Explaining...", color = Color.White, fontSize = 14.sp)
                 } else {
-                    Icon(Icons.Default.AutoAwesome, null, modifier = Modifier.size(16.dp))
+                    Icon(Icons.Default.AutoAwesome, null, tint = Color.White, modifier = Modifier.size(16.dp))
                     Spacer(Modifier.width(6.dp))
-                    Text("Explain Topic", fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                    Text("Explain Topic", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
                 }
             }
         }
@@ -185,14 +187,14 @@ fun GrammarScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(10.dp))
-                    .background(RecordingRed.copy(alpha = 0.12f))
+                    .background(RecordingRed.copy(alpha = 0.10f))
                     .border(1.dp, RecordingRed.copy(alpha = 0.3f), RoundedCornerShape(10.dp))
-                    .padding(10.dp),
+                    .padding(12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(Icons.Default.ErrorOutline, null, tint = RecordingRed, modifier = Modifier.size(16.dp))
+                Icon(Icons.Default.ErrorOutline, null, tint = RecordingRed, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(8.dp))
-                Text(error, color = Color.White.copy(alpha = 0.8f), fontSize = 12.sp)
+                Text(error, color = RecordingRed, fontSize = 13.sp)
             }
         }
 
@@ -208,19 +210,20 @@ fun GrammarScreen(
         }
 
         Spacer(Modifier.height(20.dp))
+        }
     }
 }
 
 @Composable
 fun GrammarResultCard(response: GrammarResponse, onClear: () -> Unit) {
     val difficultyColor = when (response.difficulty) {
-        "Beginner" -> Color(0xFF00E676)
-        "Intermediate" -> Color(0xFFFFD740)
-        "Advanced" -> Color(0xFFFF6D00)
-        else -> AccentTeal
+        "Beginner" -> Color(0xFF059669)
+        "Intermediate" -> Color(0xFFD97706)
+        "Advanced" -> Color(0xFFDC2626)
+        else -> AppAccent
     }
 
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
 
         // Topic + difficulty + clear
         Row(
@@ -229,7 +232,7 @@ fun GrammarResultCard(response: GrammarResponse, onClear: () -> Unit) {
         ) {
             Text(
                 text = response.topic,
-                color = Color.White,
+                color = TextPrimary,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.weight(1f)
@@ -238,65 +241,66 @@ fun GrammarResultCard(response: GrammarResponse, onClear: () -> Unit) {
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(20.dp))
-                    .background(difficultyColor.copy(alpha = 0.15f))
-                    .border(1.dp, difficultyColor.copy(alpha = 0.4f), RoundedCornerShape(20.dp))
+                    .background(difficultyColor.copy(alpha = 0.12f))
+                    .border(1.dp, difficultyColor.copy(alpha = 0.35f), RoundedCornerShape(20.dp))
                     .padding(horizontal = 10.dp, vertical = 4.dp)
             ) {
-                Text(response.difficulty, color = difficultyColor, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                Text(response.difficulty, color = difficultyColor, fontSize = 11.sp, fontWeight = FontWeight.Bold)
             }
             Spacer(Modifier.width(8.dp))
-            IconButton(onClick = onClear, modifier = Modifier.size(30.dp)) {
-                Icon(Icons.Default.Close, null, tint = Color.White.copy(alpha = 0.5f), modifier = Modifier.size(16.dp))
+            IconButton(onClick = onClear, modifier = Modifier.size(32.dp)) {
+                Icon(Icons.Default.Close, null, tint = TextMuted, modifier = Modifier.size(18.dp))
             }
         }
 
         // English definition card
         GlassCard(
-            icon = { Icon(Icons.Default.MenuBook, null, tint = AccentTeal, modifier = Modifier.size(16.dp)) },
+            icon = { Icon(Icons.AutoMirrored.Filled.MenuBook, null, tint = AppAccent, modifier = Modifier.size(18.dp)) },
             label = "Definition"
         ) {
-            Text(response.definition, color = Color.White, fontSize = 14.sp, lineHeight = 20.sp)
+            Text(response.definition, color = TextPrimary, fontSize = 14.sp, lineHeight = 21.sp)
         }
 
         // Hindi definition card
         GlassCard(
-            icon = { Text("🇮🇳", fontSize = 14.sp) },
+            icon = { Text("🇮🇳", fontSize = 16.sp) },
             label = "हिंदी में"
         ) {
-            Text(response.hindiDefinition, color = Color.White.copy(alpha = 0.9f), fontSize = 14.sp, lineHeight = 20.sp)
+            Text(response.hindiDefinition, color = TextPrimary, fontSize = 14.sp, lineHeight = 21.sp)
         }
 
         // Examples
         if (response.examples.isNotEmpty()) {
             GlassCard(
-                icon = { Icon(Icons.Default.FormatListNumbered, null, tint = Color(0xFFFFD740), modifier = Modifier.size(16.dp)) },
+                icon = { Icon(Icons.Default.FormatListNumbered, null, tint = Color(0xFFD97706), modifier = Modifier.size(18.dp)) },
                 label = "Examples"
             ) {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     response.examples.forEachIndexed { index, example ->
                         Row(verticalAlignment = Alignment.Top) {
                             Box(
                                 modifier = Modifier
-                                    .size(22.dp)
+                                    .size(24.dp)
                                     .clip(CircleShape)
-                                    .background(Color(0xFF2979FF).copy(alpha = 0.3f)),
+                                    .background(AppAccent.copy(alpha = 0.12f)),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Text("${index + 1}", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                Text("${index + 1}", color = AppAccent, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                             }
-                            Spacer(Modifier.width(8.dp))
+                            Spacer(Modifier.width(10.dp))
                             Column {
                                 Text(
                                     text = example.sentence,
-                                    color = Color.White,
+                                    color = TextPrimary,
                                     fontSize = 14.sp,
-                                    fontWeight = FontWeight.Medium
+                                    fontWeight = FontWeight.SemiBold
                                 )
+                                Spacer(Modifier.height(2.dp))
                                 Text(
                                     text = example.explanation,
-                                    color = Color.White.copy(alpha = 0.55f),
-                                    fontSize = 12.sp,
-                                    lineHeight = 16.sp
+                                    color = TextSecondary,
+                                    fontSize = 13.sp,
+                                    lineHeight = 18.sp
                                 )
                             }
                         }
@@ -308,15 +312,15 @@ fun GrammarResultCard(response: GrammarResponse, onClear: () -> Unit) {
         // Tips
         if (response.tips.isNotEmpty()) {
             GlassCard(
-                icon = { Icon(Icons.Default.TipsAndUpdates, null, tint = Color(0xFF00E676), modifier = Modifier.size(16.dp)) },
+                icon = { Icon(Icons.Default.TipsAndUpdates, null, tint = Color(0xFF059669), modifier = Modifier.size(18.dp)) },
                 label = "Tips"
             ) {
-                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     response.tips.forEach { tip ->
                         Row(verticalAlignment = Alignment.Top) {
-                            Text("✦", color = Color(0xFF00E676), fontSize = 10.sp, modifier = Modifier.padding(top = 2.dp))
-                            Spacer(Modifier.width(6.dp))
-                            Text(tip, color = Color.White.copy(alpha = 0.8f), fontSize = 13.sp, lineHeight = 18.sp)
+                            Text("✦", color = Color(0xFF059669), fontSize = 12.sp, modifier = Modifier.padding(top = 2.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text(tip, color = TextSecondary, fontSize = 13.sp, lineHeight = 19.sp)
                         }
                     }
                 }
@@ -335,15 +339,15 @@ fun GlassCard(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
-            .background(Color.White.copy(alpha = 0.06f))
-            .border(1.dp, Color.White.copy(alpha = 0.10f), RoundedCornerShape(14.dp))
-            .padding(14.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+            .background(SurfaceDark)
+            .border(1.dp, SurfaceBorder, RoundedCornerShape(14.dp))
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             icon()
-            Spacer(Modifier.width(6.dp))
-            Text(label, color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+            Spacer(Modifier.width(8.dp))
+            Text(label, color = TextMuted, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
         }
         content()
     }

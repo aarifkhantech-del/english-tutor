@@ -19,7 +19,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -27,50 +26,41 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.englishtutor.app.data.model.PlanInfo
 import com.englishtutor.app.ui.SubscriptionUiState
-import com.englishtutor.app.ui.theme.AccentTeal
+import com.englishtutor.app.ui.components.ScreenHeader
+import com.englishtutor.app.ui.theme.*
 
 @Composable
 fun SubscriptionScreen(
     uiState: SubscriptionUiState,
     isLoggedIn: Boolean,
     userEmail: String?,
-    serverUrl: String,
     onSelectPlan: (String) -> Unit,
     onSubscribe: (String) -> Unit,
     onNavigateToLogin: () -> Unit,
-    onOpenWebCheckout: () -> Unit = {},
     onCheckStatus: () -> Unit = {}
 ) {
-
     val scrollState = rememberScrollState()
-
-    val bgBrush = Brush.verticalGradient(
-        colors = listOf(Color(0xFF0A0E1A), Color(0xFF0D1F3C), Color(0xFF0A2744))
-    )
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(bgBrush)
+            .background(LightBackground)
             .verticalScroll(scrollState)
-            .padding(horizontal = 20.dp, vertical = 16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .padding(bottom = 40.dp)
     ) {
-        // Top Header
-        Text(
-            text = "Upgrade Your Learning",
-            color = Color.White,
-            fontSize = 22.sp,
-            fontWeight = FontWeight.Bold
-        )
-        Text(
-            text = "Master spoken English with unlimited AI coaching",
-            color = Color.White.copy(alpha = 0.6f),
-            fontSize = 13.sp,
-            textAlign = TextAlign.Center
+        // ── Header ──────────────────────────────────────────────────────────
+        ScreenHeader(
+            title = "Plans & Pricing",
+            subtitle = "Master spoken English with unlimited AI coaching 🚀",
+            gradientColors = listOf(AppAccent, AppAccentEnd)
         )
 
-        Spacer(Modifier.height(18.dp))
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
 
         // ── Active Subscription Status Card (if user has active/past sub) ──
         if (isLoggedIn) {
@@ -79,13 +69,13 @@ fun SubscriptionScreen(
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(16.dp))
                     .background(
-                        if (uiState.status.isActive) Color(0xFF00E676).copy(alpha = 0.12f)
-                        else Color.White.copy(alpha = 0.05f)
+                        if (uiState.status.isActive) Color(0xFF059669).copy(alpha = 0.08f)
+                        else SurfaceDark
                     )
                     .border(
                         1.dp,
-                        if (uiState.status.isActive) Color(0xFF00E676).copy(alpha = 0.35f)
-                        else Color.White.copy(alpha = 0.1f),
+                        if (uiState.status.isActive) Color(0xFF059669).copy(alpha = 0.35f)
+                        else SurfaceBorder,
                         RoundedCornerShape(16.dp)
                     )
                     .padding(16.dp)
@@ -101,12 +91,12 @@ fun SubscriptionScreen(
                                 modifier = Modifier
                                     .size(8.dp)
                                     .clip(CircleShape)
-                                    .background(if (uiState.status.isActive) Color(0xFF00E676) else Color(0xFFFF5252))
+                                    .background(if (uiState.status.isActive) Color(0xFF059669) else RecordingRed)
                             )
                             Spacer(Modifier.width(6.dp))
                             Text(
                                 text = if (uiState.status.isActive) "Subscription Active" else "No Active Plan",
-                                color = if (uiState.status.isActive) Color(0xFF00E676) else Color.White.copy(alpha = 0.7f),
+                                color = if (uiState.status.isActive) Color(0xFF059669) else TextPrimary,
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold
                             )
@@ -115,7 +105,7 @@ fun SubscriptionScreen(
                         if (uiState.status.isActive) {
                             Text(
                                 text = "${uiState.status.daysRemaining} days left",
-                                color = AccentTeal,
+                                color = AppAccent,
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.SemiBold
                             )
@@ -126,14 +116,14 @@ fun SubscriptionScreen(
 
                     Text(
                         text = "Account: ${userEmail ?: "Logged in"}",
-                        color = Color.White.copy(alpha = 0.55f),
+                        color = TextSecondary,
                         fontSize = 12.sp
                     )
 
                     if (uiState.status.isActive && uiState.status.plan != null) {
                         Text(
                             text = "Plan: Monthly Pro (₹120/mo) · Active ⚡",
-                            color = Color(0xFF00E676),
+                            color = Color(0xFF059669),
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -149,14 +139,14 @@ fun SubscriptionScreen(
                             if (startFormatted.isNotEmpty()) {
                                 Text(
                                     text = "Started: $startFormatted",
-                                    color = Color.White.copy(alpha = 0.7f),
+                                    color = TextSecondary,
                                     fontSize = 11.sp
                                 )
                             }
                             if (endFormatted.isNotEmpty()) {
                                 Text(
                                     text = "Valid Until: $endFormatted",
-                                    color = Color(0xFF00E676),
+                                    color = Color(0xFF059669),
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.SemiBold
                                 )
@@ -165,7 +155,7 @@ fun SubscriptionScreen(
                     } else {
                         Text(
                             text = "Free Tier: ${uiState.status.requestsUsed} / ${uiState.status.requestsLimit} requests used (${uiState.status.requestsRemaining} left)",
-                            color = if (uiState.status.quotaExceeded) Color(0xFFFF5252) else AccentTeal,
+                            color = if (uiState.status.quotaExceeded) RecordingRed else AppAccent,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Medium
                         )
@@ -179,22 +169,21 @@ fun SubscriptionScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(12.dp))
-                    .background(Color(0xFF2979FF).copy(alpha = 0.12f))
-                    .border(1.dp, Color(0xFF2979FF).copy(alpha = 0.3f), RoundedCornerShape(12.dp))
-                    .padding(12.dp),
+                    .background(AppAccent.copy(alpha = 0.08f))
+                    .border(1.dp, AppAccent.copy(alpha = 0.25f), RoundedCornerShape(12.dp))
+                    .padding(14.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-
-                Icon(Icons.Default.Info, null, tint = AccentTeal, modifier = Modifier.size(18.dp))
+                Icon(Icons.Default.Info, null, tint = AppAccent, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(8.dp))
                 Text(
                     text = "Sign in with email to activate your 8 free requests and keep your subscription across devices.",
-                    color = Color.White.copy(alpha = 0.85f),
+                    color = TextPrimary,
                     fontSize = 12.sp,
                     modifier = Modifier.weight(1f)
                 )
                 TextButton(onClick = onNavigateToLogin) {
-                    Text("Sign In", color = AccentTeal, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    Text("Sign In", color = AppAccent, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 }
             }
             Spacer(Modifier.height(18.dp))
@@ -205,7 +194,7 @@ fun SubscriptionScreen(
             uiState.errorMessage?.let { error ->
                 Text(
                     text = error,
-                    color = Color(0xFFFF5252),
+                    color = RecordingRed,
                     fontSize = 12.sp,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.padding(bottom = 12.dp)
@@ -217,7 +206,7 @@ fun SubscriptionScreen(
             uiState.successMessage?.let { msg ->
                 Text(
                     text = msg,
-                    color = Color(0xFF00E676),
+                    color = Color(0xFF059669),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center,
@@ -253,9 +242,9 @@ fun SubscriptionScreen(
                 modifier = Modifier.fillMaxWidth().height(46.dp),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = Color(0xFF5393FF)
+                    contentColor = AppAccent
                 ),
-                border = BorderStroke(1.dp, Color(0xFF2979FF).copy(alpha = 0.5f))
+                border = BorderStroke(1.dp, AppAccent.copy(alpha = 0.5f))
             ) {
                 Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(8.dp))
@@ -266,11 +255,11 @@ fun SubscriptionScreen(
 
         Text(
             text = "🔒 Secured by Razorpay · UPI, Cards, NetBanking",
-            color = Color.White.copy(alpha = 0.5f),
+            color = TextMuted,
             fontSize = 11.sp,
             textAlign = TextAlign.Center
         )
-
+        }
     }
 }
 
@@ -292,13 +281,13 @@ fun PlanCard(
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
             .background(
-                if (isActive) Color(0xFF00E676).copy(alpha = 0.08f)
-                else if (isSelected) Color(0xFF2979FF).copy(alpha = 0.12f)
-                else Color.White.copy(alpha = 0.04f)
+                if (isActive) Color(0xFF059669).copy(alpha = 0.06f)
+                else if (isSelected) AppAccent.copy(alpha = 0.05f)
+                else SurfaceDark
             )
             .border(
                 width = if (isActive || isSelected) 2.dp else 1.dp,
-                color = if (isActive) Color(0xFF00E676) else if (isSelected) AccentTeal else Color.White.copy(alpha = 0.12f),
+                color = if (isActive) Color(0xFF059669) else if (isSelected) AppAccent else SurfaceBorder,
                 shape = RoundedCornerShape(20.dp)
             )
             .clickable(enabled = !isActive, onClick = onSelect)
@@ -314,12 +303,15 @@ fun PlanCard(
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(100.dp))
-                        .background(Color(0xFF00E676).copy(alpha = 0.2f))
+                        .background(
+                            if (isActive) Color(0xFF059669).copy(alpha = 0.15f)
+                            else AppAccent.copy(alpha = 0.12f)
+                        )
                         .padding(horizontal = 10.dp, vertical = 4.dp)
                 ) {
                     Text(
                         text = if (isActive) "✔ ACTIVE PLAN" else (plan.badge ?: "Unlimited Pro"),
-                        color = Color(0xFF00E676),
+                        color = if (isActive) Color(0xFF059669) else AppAccent,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -329,13 +321,13 @@ fun PlanCard(
                 Row(verticalAlignment = Alignment.Bottom) {
                     Text(
                         text = "₹${plan.amount}",
-                        color = Color.White,
+                        color = TextPrimary,
                         fontSize = 28.sp,
                         fontWeight = FontWeight.Black
                     )
                     Text(
                         text = " / month",
-                        color = Color.White.copy(alpha = 0.55f),
+                        color = TextSecondary,
                         fontSize = 12.sp,
                         modifier = Modifier.padding(bottom = 4.dp, start = 2.dp)
                     )
@@ -346,19 +338,19 @@ fun PlanCard(
 
             Text(
                 text = plan.name,
-                color = Color.White,
+                color = TextPrimary,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold
             )
 
             Text(
                 text = plan.description,
-                color = Color.White.copy(alpha = 0.65f),
+                color = TextSecondary,
                 fontSize = 12.sp,
                 modifier = Modifier.padding(top = 2.dp, bottom = 12.dp)
             )
 
-            HorizontalDivider(color = Color.White.copy(alpha = 0.08f))
+            HorizontalDivider(color = SurfaceBorder)
             Spacer(Modifier.height(10.dp))
 
             // Feature bullets
@@ -378,13 +370,13 @@ fun PlanCard(
                     Icon(
                         Icons.Default.CheckCircle,
                         contentDescription = null,
-                        tint = Color(0xFF00E676),
-                        modifier = Modifier.size(14.dp)
+                        tint = Color(0xFF059669),
+                        modifier = Modifier.size(15.dp)
                     )
                     Spacer(Modifier.width(8.dp))
                     Text(
                         text = feature,
-                        color = Color.White.copy(alpha = 0.85f),
+                        color = TextPrimary,
                         fontSize = 12.sp
                     )
                 }
@@ -397,17 +389,17 @@ fun PlanCard(
                     onClick = {},
                     enabled = false,
                     colors = ButtonDefaults.buttonColors(
-                        disabledContainerColor = Color(0xFF00E676).copy(alpha = 0.15f),
-                        disabledContentColor = Color(0xFF00E676)
+                        disabledContainerColor = Color(0xFF059669).copy(alpha = 0.12f),
+                        disabledContentColor = Color(0xFF059669)
                     ),
                     shape = RoundedCornerShape(12.dp),
-                    border = BorderStroke(1.dp, Color(0xFF00E676).copy(alpha = 0.5f)),
+                    border = BorderStroke(1.dp, Color(0xFF059669).copy(alpha = 0.4f)),
                     modifier = Modifier.fillMaxWidth().height(44.dp)
                 ) {
                     Icon(
                         Icons.Default.CheckCircle,
                         contentDescription = null,
-                        tint = Color(0xFF00E676),
+                        tint = Color(0xFF059669),
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(Modifier.width(8.dp))
@@ -415,7 +407,7 @@ fun PlanCard(
                         text = if (endFormatted.isNotEmpty()) "Active Plan — Valid until $endFormatted" else "Active Plan ($daysRemaining days left)",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF00E676)
+                        color = Color(0xFF059669)
                     )
                 }
             } else {
@@ -423,23 +415,23 @@ fun PlanCard(
                     onClick = onSubscribe,
                     enabled = !isProcessing,
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF2979FF)
+                        containerColor = AppAccent
                     ),
                     shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.fillMaxWidth().height(44.dp)
+                    modifier = Modifier.fillMaxWidth().height(46.dp)
                 ) {
                     if (isProcessing) {
                         CircularProgressIndicator(color = Color.White, modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
                     } else {
                         Text(
                             text = "🚀 Upgrade to Monthly Pro (₹120)",
+                            color = Color.White,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold
                         )
                     }
                 }
             }
-
         }
     }
 }
@@ -460,5 +452,3 @@ fun formatIsoDate(isoString: String?): String {
         }
     }
 }
-
-

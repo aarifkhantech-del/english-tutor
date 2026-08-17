@@ -141,7 +141,7 @@ async function toggleRecording() {
 
 async function startRecording() {
   if (state.subscription.quotaExceeded && !state.subscription.isActive) {
-    showToast("20 Free sessions used. Please upgrade to Pro!", "error");
+    showToast("8 Free sessions used. Please upgrade to Pro!", "error");
     navigateTo("pricing");
     return;
   }
@@ -326,7 +326,7 @@ async function submitTextTutor() {
   }
 
   if (state.subscription.quotaExceeded && !state.subscription.isActive) {
-    showToast("20 Free sessions used. Please upgrade to Pro!", "error");
+    showToast("8 Free sessions used. Please upgrade to Pro!", "error");
     navigateTo("pricing");
     return;
   }

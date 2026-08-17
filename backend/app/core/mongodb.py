@@ -46,7 +46,7 @@ def get_mongo_db() -> Optional[Database]:
 def init_mongodb() -> bool:
     """Check connectivity and initialize indexes. Returns True on success."""
     if not settings.use_mongodb:
-        logger.info("MONGODB_URI not configured. Using relational/SQLite storage.")
+        logger.info("MONGODB_URI not configured. MongoDB persistence is disabled.")
         return False
 
     try:

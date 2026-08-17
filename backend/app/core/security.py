@@ -1,16 +1,20 @@
 from __future__ import annotations
 import logging
 from datetime import datetime, timedelta, timezone
-from typing import Any, Optional
+from typing import Any
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import JWTError, jwt
-from sqlalchemy.orm import Session
 
 from app.core.config import settings
-from app.core.database import get_db
-from app.models.db_models import User, Subscription
+from app.services.mongo_repositories import (
+    MongoUser,
+    get_active_subscription,
+    get_user_by_email,
+    get_user_request_count,
+    increment_user_request_count,
+)
 
 logger = logging.getLogger("english_tutor.security")
 bearer_scheme = HTTPBearer(auto_error=False)
@@ -55,15 +59,17 @@ def get_current_user_email(
     return email
 
 
-def get_current_user(
-    email: str = Depends(get_current_user_email),
-    db: Session = Depends(get_db),
-):
-    """FastAPI dependency — returns the User ORM object for the authenticated user."""
-    from app.models.db_models import User  # avoid circular import
+def get_current_user(email: str = Depends(get_current_user_email)) -> MongoUser:
+    """FastAPI dependency — returns the current authenticated Mongo user."""
+    user_doc = get_user_by_email(email)
+    if not user_doc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Account not found or deactivated.",
+        )
 
-    user = db.query(User).filter(User.email == email, User.is_active == True).first()
-    if not user:
+    user = MongoUser(user_doc)
+    if not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Account not found or deactivated.",
@@ -73,9 +79,8 @@ def get_current_user(
 
 def get_optional_user(
     credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
-    db: Session = Depends(get_db),
 ):
-    """FastAPI dependency — returns current User if bearer token provided, else None."""
+    """FastAPI dependency — returns current user if bearer token provided, else None."""
     if credentials is None:
         return None
     try:
@@ -83,48 +88,34 @@ def get_optional_user(
         email = payload.get("sub")
         if not email:
             return None
-        from app.models.db_models import User
-        return db.query(User).filter(User.email == email, User.is_active == True).first()
+        user_doc = get_user_by_email(email)
+        if not user_doc:
+            return None
+        user = MongoUser(user_doc)
+        return user if user.is_active else None
     except Exception:
         return None
 
 
-def verify_usage_quota(
-    user: User | None = Depends(get_optional_user),
-    db: Session = Depends(get_db),
-):
+def verify_usage_quota(user: Any | None = Depends(get_optional_user)):
     """
-    Enforces 8-request quota for free tier.
-    If user is authenticated and has active subscription -> unlimited access.
-    If requests >= FREE_REQUESTS_LIMIT (8) and no active plan -> raises 402.
+    Enforces the free-tier quota for the Mongo-backed app.
+    If the user has an active subscription, request count is still incremented and access continues.
     """
     if user is None:
         return None
 
-    from app.models.db_models import Subscription
-
-    # Check active subscription
-    sub = (
-        db.query(Subscription)
-        .filter(
-            Subscription.user_id == user.id,
-            Subscription.status == "active",
-        )
-        .first()
-    )
-
-    if sub and sub.is_active:
-        user.request_count = (user.request_count or 0) + 1
-        db.commit()
+    sub = get_active_subscription(user.id)
+    if sub and sub.get("is_active"):
+        increment_user_request_count(user.id)
         return user
 
-    requests_used = user.request_count or 0
+    requests_used = get_user_request_count(user.id)
     if requests_used >= settings.FREE_REQUESTS_LIMIT:
         raise HTTPException(
             status_code=status.HTTP_402_PAYMENT_REQUIRED,
             detail=f"You have used all {settings.FREE_REQUESTS_LIMIT} free practice sessions. Please select a subscription plan to continue.",
         )
 
-    user.request_count = requests_used + 1
-    db.commit()
+    increment_user_request_count(user.id)
     return user

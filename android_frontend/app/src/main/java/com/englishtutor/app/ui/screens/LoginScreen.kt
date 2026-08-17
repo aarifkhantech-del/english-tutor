@@ -3,14 +3,18 @@ package com.englishtutor.app.ui.screens
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -26,12 +30,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.englishtutor.app.ui.AuthUiState
-import com.englishtutor.app.ui.theme.AccentTeal
+import com.englishtutor.app.ui.components.ScreenHeader
+import com.englishtutor.app.ui.theme.*
 
 @Composable
 fun LoginScreen(
     uiState: AuthUiState,
-    serverUrl: String,
     onRequestOtp: (String) -> Unit,
     onVerifyOtp: (String, String) -> Unit,
     onResetOtp: () -> Unit,
@@ -40,33 +44,43 @@ fun LoginScreen(
 ) {
     var emailInput by remember { mutableStateOf("") }
     var otpInput by remember { mutableStateOf("") }
+    val scrollState = rememberScrollState()
 
-    val bgBrush = Brush.verticalGradient(
-        colors = listOf(Color(0xFF0A0E1A), Color(0xFF0D1F3C), Color(0xFF0A2744))
-    )
-
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(bgBrush)
-            .padding(horizontal = 24.dp, vertical = 16.dp),
-        contentAlignment = Alignment.Center
+            .background(LightBackground)
+            .verticalScroll(scrollState)
+            .padding(bottom = 40.dp)
     ) {
+        // ── Header ──────────────────────────────────────────────────────────
+        ScreenHeader(
+            title = "My Account",
+            subtitle = "Sign in to sync your progress and Pro plan across devices 🔐",
+            gradientColors = listOf(AppAccent, AppAccentEnd)
+        )
+
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(24.dp))
-                .background(Color.White.copy(alpha = 0.05f))
-                .border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(24.dp))
-                .padding(24.dp),
+                .padding(horizontal = 20.dp, vertical = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(SurfaceDark)
+                    .border(1.dp, SurfaceBorder, RoundedCornerShape(24.dp))
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
             // App Icon
             Box(
                 modifier = Modifier
                     .size(56.dp)
                     .clip(CircleShape)
-                    .background(Brush.linearGradient(listOf(Color(0xFF2979FF), AccentTeal))),
+                    .background(Brush.linearGradient(listOf(AppAccent, AppAccentEnd))),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -83,14 +97,14 @@ fun LoginScreen(
                 // Already Logged In View
                 Text(
                     text = "Account Signed In",
-                    color = Color.White,
+                    color = TextPrimary,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(Modifier.height(6.dp))
                 Text(
                     text = uiState.userEmail ?: "Signed in with email",
-                    color = AccentTeal,
+                    color = AppAccent,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium
                 )
@@ -98,35 +112,36 @@ fun LoginScreen(
 
                 Button(
                     onClick = onLogout,
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE53935)),
+                    colors = ButtonDefaults.buttonColors(containerColor = RecordingRed),
                     shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.fillMaxWidth().height(46.dp)
+                    modifier = Modifier.fillMaxWidth().height(48.dp)
                 ) {
-                    Icon(Icons.Default.Logout, null, modifier = Modifier.size(18.dp))
+                    Icon(Icons.AutoMirrored.Filled.Logout, null, tint = Color.White, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))
-                    Text("Log Out", fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                    Text("Log Out", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
                 }
 
                 Spacer(Modifier.height(12.dp))
                 OutlinedButton(
                     onClick = onNavigateBack,
                     shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.fillMaxWidth().height(46.dp)
+                    border = BorderStroke(1.dp, SurfaceBorder),
+                    modifier = Modifier.fillMaxWidth().height(48.dp)
                 ) {
-                    Text("Back to App", color = Color.White.copy(alpha = 0.8f))
+                    Text("Back to App", color = TextPrimary)
                 }
             } else if (!uiState.isOtpSent) {
                 // ── STEP 1: Enter Email ──
                 Text(
                     text = "Sign in to VocalBharat",
-                    color = Color.White,
+                    color = TextPrimary,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(Modifier.height(6.dp))
                 Text(
                     text = "Enter your email. We'll send you a 6-digit OTP code.",
-                    color = Color.White.copy(alpha = 0.6f),
+                    color = TextSecondary,
                     fontSize = 13.sp,
                     textAlign = TextAlign.Center
                 )
@@ -137,7 +152,7 @@ fun LoginScreen(
                     value = emailInput,
                     onValueChange = { emailInput = it },
                     label = { Text("Email Address") },
-                    placeholder = { Text("you@example.com", color = Color.White.copy(alpha = 0.3f)) },
+                    placeholder = { Text("you@example.com", color = TextMuted) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Email,
@@ -147,12 +162,14 @@ fun LoginScreen(
                         onDone = { if (emailInput.isNotBlank()) onRequestOtp(emailInput) }
                     ),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White,
-                        focusedBorderColor = AccentTeal,
-                        unfocusedBorderColor = Color.White.copy(alpha = 0.2f),
-                        focusedLabelColor = AccentTeal,
-                        unfocusedLabelColor = Color.White.copy(alpha = 0.6f)
+                        focusedTextColor = TextPrimary,
+                        unfocusedTextColor = TextPrimary,
+                        focusedBorderColor = AppAccent,
+                        unfocusedBorderColor = SurfaceBorder,
+                        focusedLabelColor = AppAccent,
+                        unfocusedLabelColor = TextSecondary,
+                        focusedContainerColor = SurfaceDark,
+                        unfocusedContainerColor = SurfaceDark
                     ),
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp)
@@ -163,28 +180,28 @@ fun LoginScreen(
                 Button(
                     onClick = { onRequestOtp(emailInput) },
                     enabled = emailInput.isNotBlank() && !uiState.isSendingOtp,
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2979FF)),
+                    colors = ButtonDefaults.buttonColors(containerColor = AppAccent),
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.fillMaxWidth().height(48.dp)
                 ) {
                     if (uiState.isSendingOtp) {
                         CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
                     } else {
-                        Text("Send OTP →", fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                        Text("Send OTP →", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             } else {
                 // ── STEP 2: Enter OTP ──
                 Text(
                     text = "Enter Verification Code",
-                    color = Color.White,
+                    color = TextPrimary,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(Modifier.height(6.dp))
                 Text(
                     text = "Code sent to $emailInput",
-                    color = AccentTeal,
+                    color = AppAccent,
                     fontSize = 13.sp,
                     textAlign = TextAlign.Center
                 )
@@ -195,7 +212,7 @@ fun LoginScreen(
                     value = otpInput,
                     onValueChange = { if (it.length <= 6) otpInput = it.filter { ch -> ch.isDigit() } },
                     label = { Text("6-Digit OTP") },
-                    placeholder = { Text("123456", color = Color.White.copy(alpha = 0.3f)) },
+                    placeholder = { Text("123456", color = TextMuted) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Number,
@@ -205,12 +222,14 @@ fun LoginScreen(
                         onDone = { if (otpInput.length == 6) onVerifyOtp(emailInput, otpInput) }
                     ),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White,
-                        focusedBorderColor = AccentTeal,
-                        unfocusedBorderColor = Color.White.copy(alpha = 0.2f),
-                        focusedLabelColor = AccentTeal,
-                        unfocusedLabelColor = Color.White.copy(alpha = 0.6f)
+                        focusedTextColor = TextPrimary,
+                        unfocusedTextColor = TextPrimary,
+                        focusedBorderColor = AppAccent,
+                        unfocusedBorderColor = SurfaceBorder,
+                        focusedLabelColor = AppAccent,
+                        unfocusedLabelColor = TextSecondary,
+                        focusedContainerColor = SurfaceDark,
+                        unfocusedContainerColor = SurfaceDark
                     ),
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp)
@@ -221,14 +240,14 @@ fun LoginScreen(
                 Button(
                     onClick = { onVerifyOtp(emailInput, otpInput) },
                     enabled = otpInput.length == 6 && !uiState.isVerifyingOtp,
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2979FF)),
+                    colors = ButtonDefaults.buttonColors(containerColor = AppAccent),
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.fillMaxWidth().height(48.dp)
                 ) {
                     if (uiState.isVerifyingOtp) {
                         CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
                     } else {
-                        Text("Verify & Sign In ✓", fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                        Text("Verify & Sign In ✓", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
                     }
                 }
 
@@ -240,7 +259,7 @@ fun LoginScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     TextButton(onClick = onResetOtp) {
-                        Text("← Change Email", color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
+                        Text("← Change Email", color = TextSecondary, fontSize = 12.sp)
                     }
 
                     TextButton(
@@ -248,7 +267,7 @@ fun LoginScreen(
                         enabled = uiState.resendCountdown == 0 && !uiState.isSendingOtp
                     ) {
                         val text = if (uiState.resendCountdown > 0) "Resend (${uiState.resendCountdown}s)" else "Resend OTP"
-                        Text(text, color = if (uiState.resendCountdown == 0) AccentTeal else Color.White.copy(alpha = 0.4f), fontSize = 12.sp)
+                        Text(text, color = if (uiState.resendCountdown == 0) AppAccent else TextMuted, fontSize = 12.sp)
                     }
                 }
             }
@@ -259,7 +278,7 @@ fun LoginScreen(
                     Spacer(Modifier.height(12.dp))
                     Text(
                         text = error,
-                        color = Color(0xFFFF5252),
+                        color = RecordingRed,
                         fontSize = 12.sp,
                         textAlign = TextAlign.Center
                     )
@@ -271,7 +290,7 @@ fun LoginScreen(
                     Spacer(Modifier.height(12.dp))
                     Text(
                         text = msg,
-                        color = Color(0xFF00E676),
+                        color = Color(0xFF059669),
                         fontSize = 12.sp,
                         textAlign = TextAlign.Center
                     )
@@ -279,4 +298,5 @@ fun LoginScreen(
             }
         }
     }
+}
 }

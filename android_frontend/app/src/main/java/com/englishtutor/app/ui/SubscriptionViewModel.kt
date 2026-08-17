@@ -44,7 +44,7 @@ class SubscriptionViewModel(application: Application) : AndroidViewModel(applica
             val plansResult = apiClient.getPlans(serverUrl)
             plansResult.onSuccess { plansOut ->
                 _uiState.update { it.copy(plans = plansOut.plans) }
-            }.onFailure { err ->
+            }.onFailure { _ ->
                 // Fallback default plans if offline
                 _uiState.update {
                     it.copy(

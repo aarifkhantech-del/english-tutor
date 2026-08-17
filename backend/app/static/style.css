@@ -26,6 +26,11 @@
   --accent-red: #E11D48;
   --accent-amber: #D97706;
   
+  /* Help & Support — signature red-orange palette */
+  --help-accent: #E11D48;
+  --help-accent-end: #F97316;
+  --help-accent-glow: rgba(225, 29, 72, 0.22);
+  
   --text-main: #0F172A;
   --text-body: #334155;
   --text-muted: #64748B;
@@ -247,6 +252,17 @@ html, body {
   color: var(--primary);
   border: 1px solid rgba(79, 70, 229, 0.25);
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+}
+
+/* Help & Support tab — red-orange accent when active */
+#tab-help.active {
+  color: var(--help-accent);
+  border-color: rgba(225, 29, 72, 0.25);
+  box-shadow: 0 2px 10px rgba(225, 29, 72, 0.10);
+}
+
+#tab-help:hover {
+  color: var(--help-accent);
 }
 
 /* Right Nav Controls */
@@ -2114,6 +2130,18 @@ html, body {
   color: var(--primary);
 }
 
+/* Help page — red-orange icon tint on FAQ and Contact Support titles */
+#view-help .faq-section-title i {
+  color: var(--help-accent);
+}
+
+/* Help page — gradient text in hero uses red-orange */
+#view-help .gradient-text {
+  background: linear-gradient(135deg, var(--help-accent) 0%, var(--help-accent-end) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
 /* ── FAQ Accordion ───────────────────────────────────────────────────────── */
 .faq-cards {
   display: flex;
@@ -2140,6 +2168,11 @@ html, body {
   border-color: rgba(79, 70, 229, 0.35);
 }
 
+/* Help page FAQ — red-orange open state */
+#view-help .faq-card.open {
+  border-color: rgba(225, 29, 72, 0.30);
+}
+
 .faq-question {
   padding: 16px 20px;
   color: var(--text-main);
@@ -2162,6 +2195,11 @@ html, body {
 .faq-card.open .faq-arrow {
   transform: rotate(180deg);
   color: var(--primary);
+}
+
+/* Help page — arrow uses red-orange when open */
+#view-help .faq-card.open .faq-arrow {
+  color: var(--help-accent);
 }
 
 .faq-answer {

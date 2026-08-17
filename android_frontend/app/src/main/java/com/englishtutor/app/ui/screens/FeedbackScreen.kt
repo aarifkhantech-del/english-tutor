@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -50,31 +51,11 @@ fun FeedbackScreen(
             .padding(bottom = 40.dp)
     ) {
         // ── Header ──────────────────────────────────────────────────────────
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(
-                    Brush.horizontalGradient(
-                        listOf(Color(0xFF2979FF), Color(0xFF00F5D4))
-                    )
-                )
-                .padding(horizontal = 24.dp, vertical = 36.dp)
-        ) {
-            Column {
-                Text(
-                    text = "Share Your Feedback",
-                    color = Color.White,
-                    fontSize = 26.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(modifier = Modifier.height(6.dp))
-                Text(
-                    text = "Your thoughts go directly to the developer ⚡",
-                    color = Color.White.copy(alpha = 0.85f),
-                    fontSize = 14.sp
-                )
-            }
-        }
+        com.englishtutor.app.ui.components.ScreenHeader(
+            title = "Share Your Feedback",
+            subtitle = "Your thoughts go directly to the developer ⚡",
+            gradientColors = listOf(AppAccent, AppAccentEnd)
+        )
 
         // ── Error Snackbar ───────────────────────────────────────────────────
         uiState.errorMessage?.let { err ->
@@ -104,7 +85,7 @@ fun FeedbackScreen(
             SuccessCard(
                 icon = { Icon(Icons.Default.CheckCircle, contentDescription = null,
                     tint = Color.White, modifier = Modifier.size(36.dp)) },
-                gradientColors = listOf(Color(0xFF2979FF), Color(0xFF00F5D4)),
+                gradientColors = listOf(AppAccent, AppAccentEnd),
                 title = "Thank You! 🎉",
                 message = uiState.successMessage,
                 ticketId = uiState.ticketId,
@@ -172,7 +153,7 @@ fun FeedbackScreen(
                         .height(52.dp),
                     shape = RoundedCornerShape(14.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF2979FF),
+                        containerColor = AppAccent,
                         disabledContainerColor = SurfaceBorder
                     )
                 ) {
@@ -183,7 +164,7 @@ fun FeedbackScreen(
                             strokeWidth = 2.5.dp
                         )
                     } else {
-                        Icon(Icons.Default.Send, contentDescription = null, tint = Color.White)
+                        Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null, tint = Color.White)
                         Spacer(Modifier.width(8.dp))
                         Text("Submit Feedback", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp)
                     }
@@ -194,13 +175,13 @@ fun FeedbackScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(12.dp))
-                        .background(Color(0xFF2979FF).copy(alpha = 0.07f))
-                        .border(1.dp, Color(0xFF2979FF).copy(alpha = 0.2f), RoundedCornerShape(12.dp))
+                        .background(AppAccent.copy(alpha = 0.07f))
+                        .border(1.dp, AppAccent.copy(alpha = 0.2f), RoundedCornerShape(12.dp))
                         .padding(14.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(Icons.Default.Email, contentDescription = null,
-                        tint = Color(0xFF5393FF), modifier = Modifier.size(16.dp))
+                        tint = AppAccent, modifier = Modifier.size(16.dp))
                     Spacer(Modifier.width(8.dp))
                     Text(
                         text = "Or email directly: aarifkhan.tech@gmail.com",
@@ -298,26 +279,11 @@ fun HelpScreen(
             .padding(bottom = 40.dp)
     ) {
         // ── Header ──────────────────────────────────────────────────────────
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(
-                    Brush.horizontalGradient(
-                        listOf(Color(0xFFFF5252), Color(0xFFFF8F00))
-                    )
-                )
-                .padding(horizontal = 24.dp, vertical = 36.dp)
-        ) {
-            Column {
-                Text("Help & Support", color = Color.White, fontSize = 26.sp, fontWeight = FontWeight.Bold)
-                Spacer(Modifier.height(6.dp))
-                Text(
-                    text = "We'll reply to your email within 24 hours 🆘",
-                    color = Color.White.copy(alpha = 0.85f),
-                    fontSize = 14.sp
-                )
-            }
-        }
+        com.englishtutor.app.ui.components.ScreenHeader(
+            title = "Help & Support",
+            subtitle = "We'll reply to your email within 24 hours 🆘",
+            gradientColors = listOf(Color(0xFFFF5252), Color(0xFFFF8F00))
+        )
 
         // ── FAQ Section ──────────────────────────────────────────────────────
         Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 20.dp)) {
@@ -346,7 +312,7 @@ fun HelpScreen(
             )
         }
 
-        Divider(color = SurfaceBorder, thickness = 0.5.dp, modifier = Modifier.padding(horizontal = 20.dp))
+        HorizontalDivider(color = SurfaceBorder, thickness = 0.5.dp, modifier = Modifier.padding(horizontal = 20.dp))
 
         // ── Error ────────────────────────────────────────────────────────────
         uiState.errorMessage?.let { err ->
@@ -516,7 +482,7 @@ fun FeedbackTextField(
                 unfocusedContainerColor = SurfaceDark,
                 focusedTextColor = TextPrimary,
                 unfocusedTextColor = TextPrimary,
-                focusedBorderColor = PrimaryBlue,
+                focusedBorderColor = AppAccent,
                 unfocusedBorderColor = SurfaceBorder,
             ),
             shape = RoundedCornerShape(12.dp)
@@ -574,7 +540,7 @@ fun CategoryDropdown(
                         text = { Text(display, color = TextPrimary, fontSize = 14.sp) },
                         onClick = { onSelect(value); expanded = false },
                         modifier = Modifier.background(
-                            if (value == selected) PrimaryBlue.copy(alpha = 0.15f) else Color.Transparent
+                            if (value == selected) AppAccent.copy(alpha = 0.15f) else Color.Transparent
                         )
                     )
                 }
@@ -594,7 +560,7 @@ fun FaqItem(question: String, answer: String) {
             .background(SurfaceDark)
             .border(
                 1.dp,
-                if (expanded) PrimaryBlue.copy(alpha = 0.4f) else SurfaceBorder,
+                if (expanded) AppAccent.copy(alpha = 0.4f) else SurfaceBorder,
                 RoundedCornerShape(12.dp)
             )
             .clickable { expanded = !expanded }

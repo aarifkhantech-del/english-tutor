@@ -8,7 +8,6 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
-from app.core.database import engine
 from app.api.routes import (
     health_router,
     transcribe_router,
@@ -39,11 +38,11 @@ async def lifespan(app: FastAPI):
     """Application lifespan for pre-warming models and managing connections."""
     logger.info("Initializing Hindi -> English Tutor API v%s...", settings.VERSION)
 
-    # Auto-create all database tables and apply migrations (safe to run every startup)
+    # MongoDB is the active persistence layer; SQLAlchemy table bootstrap is intentionally disabled.
     from app.models import db_models  # noqa: F401 — ensures models are registered
     from app.core.database import init_db
     init_db()
-    logger.info("Relational database tables verified.")
+    logger.info("Mongo-only persistence mode active.")
 
     # Initialize MongoDB if configured
     from app.core.mongodb import init_mongodb, close_mongodb

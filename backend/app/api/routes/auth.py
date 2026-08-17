@@ -11,11 +11,8 @@ GET  /auth/me            — return the currently authenticated user's profile
 import logging
 
 from fastapi import APIRouter, Depends, status
-from sqlalchemy.orm import Session
 
-from app.core.database import get_db
 from app.core.security import create_access_token, get_current_user
-from app.models.db_models import User
 from app.models.schemas import OTPRequestIn, OTPRequestOut, OTPVerifyIn, TokenOut, UserOut
 from app.services import otp_service
 
@@ -33,9 +30,9 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
         "The OTP is valid for 10 minutes. Rate-limited to 3 requests per hour per email."
     ),
 )
-async def request_otp(payload: OTPRequestIn, db: Session = Depends(get_db)):
+async def request_otp(payload: OTPRequestIn):
     email = payload.email.lower().strip()
-    await otp_service.request_otp(db, email)
+    await otp_service.request_otp(None, email)
     return OTPRequestOut(
         message="OTP sent successfully. Please check your email inbox.",
         email=email,
@@ -52,9 +49,9 @@ async def request_otp(payload: OTPRequestIn, db: Session = Depends(get_db)):
         "that must be included in the Authorization header for protected endpoints."
     ),
 )
-async def verify_otp(payload: OTPVerifyIn, db: Session = Depends(get_db)):
+async def verify_otp(payload: OTPVerifyIn):
     email = payload.email.lower().strip()
-    user, is_new = otp_service.verify_otp(db, email, payload.otp)
+    user, is_new = otp_service.verify_otp(None, email, payload.otp)
     token = create_access_token(email)
     return TokenOut(
         access_token=token,
@@ -70,5 +67,11 @@ async def verify_otp(payload: OTPVerifyIn, db: Session = Depends(get_db)):
     summary="Get current user profile",
     description="Returns the authenticated user's profile. Requires a valid JWT bearer token.",
 )
-async def get_me(current_user: User = Depends(get_current_user)):
-    return current_user
+async def get_me(current_user=Depends(get_current_user)):
+    return UserOut(
+        id=current_user.id,
+        email=current_user.email,
+        is_active=current_user.is_active,
+        created_at=current_user.created_at,
+        last_login_at=current_user.last_login_at,
+    )

@@ -1,6 +1,5 @@
 import os
 from pathlib import Path
-from typing import List
 from dotenv import load_dotenv
 
 # Base backend directory
@@ -35,18 +34,13 @@ class Settings:
     PORT: int = int(os.getenv("PORT", "8000"))
     CORS_ORIGINS: list[str] = ["*"]
 
-    # ── Database ─────────────────────────────────────────────────────────────
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./english_tutor.db")
+    # ── Database (MongoDB only) ──────────────────────────────────────────────
     MONGODB_URI: str = os.getenv("MONGODB_URI", "")
     MONGODB_DB_NAME: str = os.getenv("MONGODB_DB_NAME", "vocalbharat")
 
     @property
     def use_mongodb(self) -> bool:
         return bool(self.MONGODB_URI.strip())
-
-    @property
-    def is_sqlite(self) -> bool:
-        return "sqlite" in self.DATABASE_URL
 
     @property
     def is_dev(self) -> bool:

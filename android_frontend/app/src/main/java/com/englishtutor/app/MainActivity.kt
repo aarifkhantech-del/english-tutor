@@ -17,8 +17,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -115,9 +117,6 @@ class MainActivity : ComponentActivity(), PaymentResultWithDataListener {
                     onRequestGrammarMic = { checkGrammarPermission() },
                     onStartRazorpayPayment = { orderOut ->
                         startRazorpayPayment(orderOut, authViewModel.uiState.value.userEmail)
-                    },
-                    onOpenWebCheckout = { url ->
-                        openWebCheckout(url)
                     }
                 )
             }
@@ -226,8 +225,7 @@ fun AppShell(
     feedbackViewModel: FeedbackViewModel,
     onRequestTutorMic: () -> Unit,
     onRequestGrammarMic: () -> Unit,
-    onStartRazorpayPayment: (InitiatePaymentOut) -> Unit,
-    onOpenWebCheckout: (String) -> Unit
+    onStartRazorpayPayment: (InitiatePaymentOut) -> Unit
 ) {
     val navController = rememberNavController()
     val drawerState = rememberDrawerState(DrawerValue.Closed)
@@ -288,7 +286,7 @@ fun AppShell(
                     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
                         Box(
                             modifier = Modifier.size(34.dp).clip(RoundedCornerShape(10.dp))
-                                .background(Brush.linearGradient(listOf(PrimaryIndigo, PrimaryViolet))),
+                        .background(Brush.linearGradient(listOf(AppAccent, AppAccentEnd))),
                             contentAlignment = Alignment.Center
                         ) { Text("VB", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Black) }
                         Spacer(Modifier.width(8.dp))
@@ -327,12 +325,12 @@ fun AppShell(
                             .clip(RoundedCornerShape(100.dp))
                             .background(
                                 if (subscriptionState.status.isActive) Color(0xFF10B981).copy(alpha = 0.12f)
-                                else PrimaryIndigo.copy(alpha = 0.1f)
+                                else AppAccent.copy(alpha = 0.1f)
                             )
                             .border(
                                 1.dp,
                                 if (subscriptionState.status.isActive) Color(0xFF10B981).copy(alpha = 0.4f)
-                                else PrimaryIndigo.copy(alpha = 0.3f),
+                                else AppAccent.copy(alpha = 0.3f),
                                 RoundedCornerShape(100.dp)
                             )
                             .clickable { navController.navigate(Screen.Subscription.route) }
@@ -340,7 +338,7 @@ fun AppShell(
                     ) {
                         Text(
                             text = if (subscriptionState.status.isActive) "Pro Active ⚡" else "Upgrade Pro",
-                            color = if (subscriptionState.status.isActive) Color(0xFF059669) else PrimaryIndigo,
+                            color = if (subscriptionState.status.isActive) Color(0xFF059669) else AppAccent,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -378,7 +376,6 @@ fun AppShell(
                     composable(Screen.Grammar.route) {
                         GrammarScreen(
                             uiState = grammarState,
-                            serverUrl = tutorState.serverUrl,
                             onTopicChange = { grammarViewModel.setTopic(it) },
                             onExplain = { grammarViewModel.explainTopic(tutorState.serverUrl) },
                             onStartVoice = onRequestGrammarMic,
@@ -391,7 +388,6 @@ fun AppShell(
                             uiState = subscriptionState,
                             isLoggedIn = authState.isLoggedIn,
                             userEmail = authState.userEmail,
-                            serverUrl = tutorState.serverUrl,
                             onSelectPlan = { subscriptionViewModel.selectPlan(it) },
                             onSubscribe = { planId ->
                                 subscriptionViewModel.subscribeToPlan(
@@ -407,9 +403,6 @@ fun AppShell(
                                 )
                             },
                             onNavigateToLogin = { navController.navigate(Screen.Login.route) },
-                            onOpenWebCheckout = {
-                                onOpenWebCheckout("${tutorState.serverUrl}/checkout")
-                            },
                             onCheckStatus = {
                                 subscriptionViewModel.checkOrderStatus(
                                     serverUrl = tutorState.serverUrl,
@@ -425,7 +418,6 @@ fun AppShell(
                     composable(Screen.Login.route) {
                         LoginScreen(
                             uiState = authState,
-                            serverUrl = tutorState.serverUrl,
                             onRequestOtp = { email -> authViewModel.requestOtp(tutorState.serverUrl, email) },
                             onVerifyOtp = { email, otp ->
                                 authViewModel.verifyOtp(tutorState.serverUrl, email, otp) {
@@ -437,6 +429,9 @@ fun AppShell(
                             onLogout = {
                                 authViewModel.logout()
                                 subscriptionViewModel.loadPlansAndStatus(tutorState.serverUrl)
+                                navController.navigate(Screen.Home.route) {
+                                    popUpTo(Screen.Login.route) { inclusive = true }
+                                }
                             },
                             onNavigateBack = { navController.navigate(Screen.Home.route) }
                         )
@@ -510,7 +505,7 @@ fun AppDrawer(
             Column {
                 Box(
                     modifier = Modifier.size(50.dp).clip(RoundedCornerShape(14.dp))
-                        .background(Brush.linearGradient(listOf(PrimaryIndigo, PrimaryViolet))),
+                        .background(Brush.linearGradient(listOf(AppAccent, AppAccentEnd))),
                     contentAlignment = Alignment.Center
                 ) { Text("VB", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Black) }
 
@@ -552,7 +547,7 @@ fun AppDrawer(
                             onClose()
                         }
                     ) {
-                        Text("👋 Guest · Sign in with OTP", color = PrimaryIndigo, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                        Text("👋 Guest · Sign in with OTP", color = AppAccent, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
                     }
                 }
             }
@@ -560,24 +555,24 @@ fun AppDrawer(
 
 
 
-        HorizontalDivider(color = Color.White.copy(alpha = 0.08f))
+        HorizontalDivider(color = Color(0xFFE2E8F0))
         Spacer(Modifier.height(8.dp))
 
-        // Nav items
+        // Nav items — all tabs use the unified red-orange brand accent
         screens.forEach { screen ->
             val isSelected = currentRoute == screen.route
             NavigationDrawerItem(
                 icon = {
                     Icon(
                         screen.icon, null,
-                        tint = if (isSelected) AccentTeal else Color.White.copy(alpha = 0.6f)
+                        tint = if (isSelected) AppAccent else Color(0xFF64748B)
                     )
                 },
                 label = {
                     Text(
                         screen.label,
-                        color = if (isSelected) Color.White else Color.White.copy(alpha = 0.65f),
-                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
+                        color = if (isSelected) AppAccent else Color(0xFF334155),
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                     )
                 },
                 selected = isSelected,
@@ -591,18 +586,18 @@ fun AppDrawer(
                 },
                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp),
                 colors = NavigationDrawerItemDefaults.colors(
-                    selectedContainerColor = AccentTeal.copy(alpha = 0.15f),
+                    selectedContainerColor = AppAccent.copy(alpha = 0.10f),
                     unselectedContainerColor = Color.Transparent
                 )
             )
         }
 
         Spacer(Modifier.weight(1f))
-        HorizontalDivider(color = Color.White.copy(alpha = 0.06f))
+        HorizontalDivider(color = Color(0xFFE2E8F0))
         Spacer(Modifier.height(8.dp))
         Text(
             "VocalBharat v1.0",
-            color = Color.White.copy(alpha = 0.25f),
+            color = Color(0xFF94A3B8),
             fontSize = 11.sp,
             modifier = Modifier.padding(start = 20.dp, bottom = 16.dp)
         )
@@ -625,12 +620,12 @@ fun HomeScreenContent(
         AlertDialog(
             onDismissRequest = { showQuotaDialog = false },
             title = {
-                Text("🌟 8 Free Practice Limit Reached", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                Text("🌟 8 Free Practice Limit Reached", color = TextPrimary, fontWeight = FontWeight.Bold, fontSize = 18.sp)
             },
             text = {
                 Text(
                     "You have completed your 8 free spoken English sessions! Please choose a subscription plan to continue learning with unlimited AI coaching.",
-                    color = Color.White.copy(alpha = 0.85f),
+                    color = TextSecondary,
                     fontSize = 14.sp
                 )
             },
@@ -640,136 +635,129 @@ fun HomeScreenContent(
                         showQuotaDialog = false
                         onNavigateToSubscription()
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2979FF))
+                    colors = ButtonDefaults.buttonColors(containerColor = AppAccent)
                 ) {
-                    Text("View Plans (₹120/mo)", fontWeight = FontWeight.Bold)
+                    Text("View Plans (₹120/mo)", color = Color.White, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showQuotaDialog = false }) {
-                    Text("Cancel", color = Color.White.copy(alpha = 0.6f))
+                    Text("Cancel", color = TextSecondary)
                 }
             },
-            containerColor = Color(0xFF0F2035)
+            containerColor = SurfaceDark
         )
     }
 
+    val scrollState = rememberScrollState()
+
     Column(
-        modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.SpaceBetween
+        modifier = Modifier
+            .fillMaxSize()
+            .background(LightBackground)
+            .verticalScroll(scrollState)
+            .padding(bottom = 32.dp)
     ) {
-        // Page title & quota promo banner
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = "Hindi to English",
-                color = Color.White,
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = "Hindi mein bolen, English mein seekhen 🎯",
-                color = Color.White.copy(alpha = 0.45f),
-                fontSize = 12.sp,
-                textAlign = TextAlign.Center
-            )
-
-            // Promo Banner if not subscribed
-            if (!subState.status.isActive) {
-                Spacer(Modifier.height(8.dp))
-                Row(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(100.dp))
-                        .background(
-                            if (subState.status.quotaExceeded) Color(0xFFFF5252).copy(alpha = 0.15f)
-                            else Color(0xFF00E676).copy(alpha = 0.12f)
+        ScreenHeader(
+            title = "Hindi to English",
+            subtitle = "Hindi mein bolen, English mein seekhen 🎯",
+            gradientColors = listOf(AppAccent, AppAccentEnd),
+            extraContent = {
+                if (!subState.status.isActive) {
+                    Row(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(100.dp))
+                            .background(Color.White.copy(alpha = 0.2f))
+                            .border(1.dp, Color.White.copy(alpha = 0.4f), RoundedCornerShape(100.dp))
+                            .clickable(onClick = onNavigateToSubscription)
+                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            if (subState.status.quotaExceeded) Icons.Default.Lock else Icons.Default.Stars,
+                            null,
+                            tint = Color.White,
+                            modifier = Modifier.size(13.dp)
                         )
-                        .border(
-                            1.dp,
-                            if (subState.status.quotaExceeded) Color(0xFFFF5252).copy(alpha = 0.5f)
-                            else Color(0xFF00E676).copy(alpha = 0.35f),
-                            RoundedCornerShape(100.dp)
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            text = if (subState.status.quotaExceeded)
+                                "${subState.status.requestsLimit}/${subState.status.requestsLimit} Free Requests Used · Choose a Plan →"
+                            else
+                                "⚡ ${subState.status.requestsUsed}/${subState.status.requestsLimit} Requests Used (${subState.status.requestsRemaining} Left) · Upgrade →",
+                            color = Color.White,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.SemiBold
                         )
-                        .clickable(onClick = onNavigateToSubscription)
-                        .padding(horizontal = 12.dp, vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        if (subState.status.quotaExceeded) Icons.Default.Lock else Icons.Default.Stars,
-                        null,
-                        tint = if (subState.status.quotaExceeded) Color(0xFFFF5252) else Color(0xFF00E676),
-                        modifier = Modifier.size(13.dp)
-                    )
-                    Spacer(Modifier.width(6.dp))
-                    Text(
-                        text = if (subState.status.quotaExceeded)
-                            "20 Free Requests Used · Choose a Plan →"
-                        else
-                            "⚡ ${subState.status.requestsRemaining}/20 Free Requests Left · Upgrade →",
-                        color = if (subState.status.quotaExceeded) Color(0xFFFF5252) else Color(0xFF00E676),
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
-            }
-        }
-
-        CompactMicButton(
-            isRecording = uiState.isRecording,
-            onClick = {
-                if (subState.status.quotaExceeded && !subState.status.isActive) {
-                    showQuotaDialog = true
-                } else {
-                    onRequestPermission()
+                    }
                 }
             }
         )
 
         Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            if (!uiState.isServerOnline && !uiState.isRecording && !uiState.isProcessing) {
-                GlassBanner(
-                    icon = { Icon(Icons.Default.WarningAmber, null, tint = RecordingRed, modifier = Modifier.size(16.dp)) },
-                    text = "Backend offline. Tap Settings to configure.",
-                    tint = RecordingRed,
-                    action = { TextButton(onClick = { viewModel.openSettings() }) { Text("Fix", fontSize = 11.sp, color = PrimaryLight) } }
-                )
-            }
-            uiState.errorMessage?.let { error ->
-                GlassBanner(
-                    icon = { Icon(Icons.Default.ErrorOutline, null, tint = RecordingRed, modifier = Modifier.size(16.dp)) },
-                    text = error,
-                    tint = RecordingRed
-                )
-            }
-            AnimatedVisibility(visible = uiState.isProcessing, enter = fadeIn() + expandVertically(), exit = fadeOut() + shrinkVertically()) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(Color.White.copy(alpha = 0.07f)).padding(10.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    CircularProgressIndicator(color = AccentTeal, modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
-                    Text("Translating to English...", color = Color.White.copy(alpha = 0.7f), fontSize = 13.sp)
+            CompactMicButton(
+                isRecording = uiState.isRecording,
+                onClick = {
+                    if (subState.status.quotaExceeded && !subState.status.isActive) {
+                        showQuotaDialog = true
+                    } else {
+                        onRequestPermission()
+                    }
                 }
-            }
-            AnimatedVisibility(visible = uiState.pendingTranscription != null, enter = slideInVertically { it / 2 } + fadeIn(), exit = slideOutVertically { it / 2 } + fadeOut()) {
-                uiState.pendingTranscription?.let { pendingText ->
-                    CompactTranscriptionPreview(
-                        text = pendingText,
-                        isTranslating = uiState.isTranslating,
-                        onProceed = { viewModel.proceedToTranslate(pendingText) },
-                        onCancel = { viewModel.cancelSpeakRequest() }
+            )
+
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                if (!uiState.isServerOnline && !uiState.isRecording && !uiState.isProcessing) {
+                    GlassBanner(
+                        icon = { Icon(Icons.Default.WarningAmber, null, tint = RecordingRed, modifier = Modifier.size(16.dp)) },
+                        text = "Backend offline. Tap Settings to configure.",
+                        tint = RecordingRed,
+                        action = { TextButton(onClick = { viewModel.openSettings() }) { Text("Fix", fontSize = 11.sp, color = AppAccent) } }
                     )
                 }
-            }
-            AnimatedVisibility(visible = uiState.result != null, enter = fadeIn() + expandVertically(), exit = fadeOut() + shrinkVertically()) {
-                uiState.result?.let { response ->
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        TranscriptionCard(text = response.transcription)
-                        CorrectionCard(correction = response.correction, isPlayingAudio = uiState.isPlayingAudio, onPlayAudio = { viewModel.togglePlayAudio() })
-                        PracticeCard(correction = response.correction)
+                uiState.errorMessage?.let { error ->
+                    GlassBanner(
+                        icon = { Icon(Icons.Default.ErrorOutline, null, tint = RecordingRed, modifier = Modifier.size(16.dp)) },
+                        text = error,
+                        tint = RecordingRed
+                    )
+                }
+                AnimatedVisibility(visible = uiState.isProcessing, enter = fadeIn() + expandVertically(), exit = fadeOut() + shrinkVertically()) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(SurfaceDark).border(1.dp, SurfaceBorder, RoundedCornerShape(12.dp)).padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        CircularProgressIndicator(color = AppAccent, modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                        Text("Translating to English...", color = TextPrimary, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                    }
+                }
+                AnimatedVisibility(visible = uiState.pendingTranscription != null, enter = slideInVertically { it / 2 } + fadeIn(), exit = slideOutVertically { it / 2 } + fadeOut()) {
+                    uiState.pendingTranscription?.let { pendingText ->
+                        CompactTranscriptionPreview(
+                            text = pendingText,
+                            isTranslating = uiState.isTranslating,
+                            onProceed = { viewModel.proceedToTranslate(pendingText) },
+                            onCancel = { viewModel.cancelSpeakRequest() }
+                        )
+                    }
+                }
+                AnimatedVisibility(visible = uiState.result != null, enter = fadeIn() + expandVertically(), exit = fadeOut() + shrinkVertically()) {
+                    uiState.result?.let { response ->
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            TranscriptionCard(text = response.transcription)
+                            CorrectionCard(correction = response.correction, isPlayingAudio = uiState.isPlayingAudio, onPlayAudio = { viewModel.togglePlayAudio() })
+                            PracticeCard(correction = response.correction)
+                        }
                     }
                 }
             }
@@ -792,8 +780,8 @@ fun CompactMicButton(isRecording: Boolean, onClick: () -> Unit) {
             }
             Box(
                 modifier = Modifier.size(82.dp).clip(CircleShape)
-                    .background(Brush.radialGradient(listOf(if (isRecording) RecordingRed else Color(0xFF2979FF), if (isRecording) Color(0xFFFF6D00) else AccentTeal)))
-                    .border(2.dp, Color.White.copy(alpha = 0.15f), CircleShape)
+                    .background(Brush.radialGradient(listOf(if (isRecording) RecordingRed else AppAccent, if (isRecording) Color(0xFFFF6D00) else AppAccentEnd)))
+                    .border(2.dp, Color.White.copy(alpha = 0.3f), CircleShape)
                     .clickable(onClick = onClick),
                 contentAlignment = Alignment.Center
             ) {
@@ -807,7 +795,7 @@ fun CompactMicButton(isRecording: Boolean, onClick: () -> Unit) {
         Spacer(Modifier.height(6.dp))
         Text(
             text = if (isRecording) "Listening... tap to stop" else "Tap to speak in Hindi",
-            color = if (isRecording) RecordingRed else Color.White.copy(alpha = 0.55f),
+            color = if (isRecording) RecordingRed else TextSecondary,
             fontSize = 12.sp, textAlign = TextAlign.Center
         )
     }
@@ -817,14 +805,14 @@ fun CompactMicButton(isRecording: Boolean, onClick: () -> Unit) {
 fun GlassBanner(icon: @Composable () -> Unit, text: String, tint: Color, action: (@Composable () -> Unit)? = null) {
     Row(
         modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp))
-            .background(tint.copy(alpha = 0.10f))
-            .border(1.dp, tint.copy(alpha = 0.25f), RoundedCornerShape(10.dp))
-            .padding(horizontal = 10.dp, vertical = 8.dp),
+            .background(SurfaceDark)
+            .border(1.dp, tint.copy(alpha = 0.35f), RoundedCornerShape(10.dp))
+            .padding(horizontal = 12.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         icon()
         Spacer(Modifier.width(8.dp))
-        Text(text = text, color = Color.White.copy(alpha = 0.75f), fontSize = 12.sp, modifier = Modifier.weight(1f), maxLines = 2, overflow = TextOverflow.Ellipsis)
+        Text(text = text, color = TextPrimary, fontSize = 12.sp, modifier = Modifier.weight(1f), maxLines = 2, overflow = TextOverflow.Ellipsis)
         action?.invoke()
     }
 }
@@ -833,31 +821,31 @@ fun GlassBanner(icon: @Composable () -> Unit, text: String, tint: Color, action:
 fun CompactTranscriptionPreview(text: String, isTranslating: Boolean, onProceed: () -> Unit, onCancel: () -> Unit) {
     Column(
         modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp))
-            .background(Color.White.copy(alpha = 0.07f))
-            .border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(14.dp))
-            .padding(12.dp),
+            .background(SurfaceDark)
+            .border(1.dp, SurfaceBorder, RoundedCornerShape(14.dp))
+            .padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Default.RecordVoiceOver, null, tint = AccentTeal, modifier = Modifier.size(16.dp))
+            Icon(Icons.Default.RecordVoiceOver, null, tint = AppAccent, modifier = Modifier.size(16.dp))
             Spacer(Modifier.width(6.dp))
-            Text("You said:", color = AccentTeal, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+            Text("You said:", color = AppAccent, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
         }
-        Text(text = text, color = Color.White, fontSize = 14.sp, maxLines = 3, overflow = TextOverflow.Ellipsis)
+        Text(text = text, color = TextPrimary, fontSize = 15.sp, maxLines = 3, overflow = TextOverflow.Ellipsis)
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedButton(
-                onClick = onCancel, modifier = Modifier.weight(1f).height(36.dp), shape = RoundedCornerShape(10.dp),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White.copy(alpha = 0.7f)),
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.2f)),
+                onClick = onCancel, modifier = Modifier.weight(1f).height(38.dp), shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = TextSecondary),
+                border = androidx.compose.foundation.BorderStroke(1.dp, SurfaceBorder),
                 contentPadding = PaddingValues(0.dp)
             ) { Text("Cancel", fontSize = 13.sp) }
             Button(
-                onClick = onProceed, enabled = !isTranslating, modifier = Modifier.weight(1f).height(36.dp),
-                shape = RoundedCornerShape(10.dp), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2979FF)),
+                onClick = onProceed, enabled = !isTranslating, modifier = Modifier.weight(1f).height(38.dp),
+                shape = RoundedCornerShape(10.dp), colors = ButtonDefaults.buttonColors(containerColor = AppAccent),
                 contentPadding = PaddingValues(0.dp)
             ) {
                 if (isTranslating) CircularProgressIndicator(color = Color.White, modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
-                else Text("Proceed", fontSize = 13.sp)
+                else Text("Proceed", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
             }
         }
     }

@@ -4,8 +4,8 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.Lightbulb
-import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -42,13 +42,13 @@ fun CorrectionCard(
             ) {
                 Surface(
                     shape = RoundedCornerShape(12.dp),
-                    color = PrimaryBlue.copy(alpha = 0.2f)
+                    color = PrimaryBlue.copy(alpha = 0.12f)
                 ) {
                     Text(
                         text = "🇬🇧 English Translation",
                         style = MaterialTheme.typography.titleMedium,
                         fontSize = 13.sp,
-                        color = PrimaryLight,
+                        color = PrimaryBlue,
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
                     )
                 }
@@ -60,7 +60,7 @@ fun CorrectionCard(
                     contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
                 ) {
                     Icon(
-                        imageVector = if (isPlayingAudio) Icons.Default.Pause else Icons.Default.VolumeUp,
+                        imageVector = if (isPlayingAudio) Icons.Default.Pause else Icons.AutoMirrored.Filled.VolumeUp,
                         contentDescription = "Listen",
                         modifier = Modifier.size(18.dp)
                     )
