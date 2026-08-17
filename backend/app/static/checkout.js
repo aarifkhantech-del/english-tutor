@@ -7,8 +7,8 @@
 const state = {
   keyId: '',
   currency: 'INR',
-  selectedAmountRupees: 300,
-  selectedAmountPaise: 30000,
+  selectedAmountRupees: 120,
+  selectedAmountPaise: 12000,
   selectedPlanName: 'Monthly Pro',
   isProcessing: false,
 };
@@ -66,7 +66,7 @@ async function fetchPaymentConfig() {
  * Configure plan toggle selector
  */
 function setupPlanSelectors() {
-  elements.tierMonthly.addEventListener('click', () => selectPlan(300, 'Monthly Pro', elements.tierMonthly, elements.tierTest));
+  elements.tierMonthly.addEventListener('click', () => selectPlan(120, 'Monthly Pro', elements.tierMonthly, elements.tierTest));
   elements.tierTest.addEventListener('click', () => selectPlan(1, 'Test ₹1.00', elements.tierTest, elements.tierMonthly));
 }
 

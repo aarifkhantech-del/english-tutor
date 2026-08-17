@@ -49,7 +49,7 @@ class SubscriptionViewModel(application: Application) : AndroidViewModel(applica
                 _uiState.update {
                     it.copy(
                         plans = listOf(
-                            PlanInfo("monthly", "Monthly Pro Plan", "Unlimited access to all AI coaching and grammar lessons.", 300, "INR", 30, "Recommended")
+                            PlanInfo("monthly", "Monthly Pro Plan", "Unlimited access to all AI coaching and grammar lessons.", 120, "INR", 30, "Recommended")
                         )
                     )
                 }
@@ -64,6 +64,8 @@ class SubscriptionViewModel(application: Application) : AndroidViewModel(applica
                 }.onFailure { err ->
                     _uiState.update { it.copy(errorMessage = err.message) }
                 }
+            } else {
+                _uiState.update { it.copy(status = SubscriptionStatusOut()) }
             }
 
             _uiState.update { it.copy(isLoading = false) }

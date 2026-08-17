@@ -15,7 +15,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
 
   <!-- Styles -->
-  <link rel="stylesheet" href="/static/style.css" />
+  <link rel="stylesheet" href="/static/style.css?v=4" />
 
   <!-- Razorpay Standard Checkout SDK -->
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
@@ -81,7 +81,7 @@
             <button class="btn-account-pill" id="btnAccount" onclick="openAccountModal()">
               <i class="fa-solid fa-user-circle"></i>
               <span id="accountLabel">Sign In</span>
-              <span class="quota-badge" id="quotaBadge">20 Free</span>
+              <span class="quota-badge" id="quotaBadge">8 Free</span>
             </button>
           </div>
 
@@ -112,7 +112,7 @@
             <i class="fa-solid fa-sparkles quota-icon"></i>
             <div>
               <strong id="quotaTitle">Free Practice Tier</strong>
-              <p id="quotaDesc">You have <span id="quotaCount">20</span> free AI spoken sessions left.</p>
+              <p id="quotaDesc">You have <span id="quotaCount">8</span> free AI spoken sessions left.</p>
             </div>
           </div>
           <button class="btn-quota-upgrade" onclick="navigateTo('pricing')">Get Unlimited Pro →</button>
@@ -377,8 +377,13 @@
             <div class="progress-bar-bg">
               <div class="progress-bar-fill" id="progressBarFill" style="width: 0%;"></div>
             </div>
+            <div class="sub-dates-container" id="subDatesRow" style="display:none; margin-top:12px; font-size:12px; color:#A78BFA; justify-content:space-between; border-top:1px solid rgba(255,255,255,0.08); padding-top:10px;">
+              <span><i class="fa-solid fa-calendar-check" style="margin-right:4px;"></i> Subscribed: <strong id="subStartDateText" style="color:#fff;">-</strong></span>
+              <span><i class="fa-solid fa-calendar-xmark" style="margin-right:4px;"></i> Valid Until: <strong id="subEndDateText" style="color:#00E676;">-</strong></span>
+            </div>
           </div>
         </div>
+
 
         <!-- Pricing Cards Grid -->
         <div class="pricing-grid">
@@ -386,7 +391,7 @@
           <div class="pricing-card free-card">
             <div class="plan-header">
               <span class="plan-type-badge">Free Starter</span>
-              <h3 class="plan-name">20 Free Practice Sessions</h3>
+              <h3 class="plan-name">8 Free Practice Sessions</h3>
               <p class="plan-tagline">Great for trying out spoken Hindi to English AI coaching.</p>
             </div>
             <div class="plan-price">
@@ -394,7 +399,7 @@
               <span class="price-period">/ forever</span>
             </div>
             <ul class="plan-features">
-              <li><i class="fa-solid fa-check"></i> 20 Free spoken voice/text sessions</li>
+              <li><i class="fa-solid fa-check"></i> 8 Free spoken voice/text sessions</li>
               <li><i class="fa-solid fa-check"></i> Instant Hindi to English translation</li>
               <li><i class="fa-solid fa-check"></i> Basic grammar feedback</li>
               <li><i class="fa-solid fa-check"></i> Access to Grammar Explorer</li>
@@ -415,7 +420,7 @@
               <p class="plan-tagline">Master spoken English fluency with unlimited practice & coaching.</p>
             </div>
             <div class="plan-price">
-              <span class="price-val">₹300</span>
+              <span class="price-val">₹120</span>
               <span class="price-period">/ month (30 days)</span>
             </div>
             <ul class="plan-features">
@@ -430,7 +435,7 @@
             <!-- Checkout Trigger Button -->
             <button class="btn-plan-action btn-pro-checkout" id="btnProCheckout" onclick="startCheckoutFlow()">
               <i class="fa-solid fa-lock"></i>
-              <span id="btnPayText">Upgrade to Monthly Pro (₹300)</span>
+              <span id="btnPayText">Upgrade to Monthly Pro (₹120)</span>
               <span class="spinner hidden" id="checkoutSpinner"></span>
             </button>
 
@@ -750,7 +755,7 @@
         <div class="profile-details">
           <div class="profile-stat-row">
             <span>Remaining Requests</span>
-            <strong id="profileRequestsCount">20 left</strong>
+            <strong id="profileRequestsCount">8 left</strong>
           </div>
           <div class="profile-stat-row">
             <span>Subscription Status</span>
@@ -773,6 +778,6 @@
   <div class="toast-container" id="toastContainer"></div>
 
   <!-- Application Logic -->
-  <script src="/static/app.js"></script>
+  <script src="/static/app.js?v=4"></script>
 </body>
 </html>

@@ -248,7 +248,7 @@ fun AppShell(
     }
 
     val bgBrush = Brush.verticalGradient(
-        colors = listOf(Color(0xFF0A0E1A), Color(0xFF0D1F3C), Color(0xFF0A2744))
+        colors = listOf(Color(0xFFEEF2FF), Color(0xFFF8FAFC), Color(0xFFF1F5F9))
     )
 
     ModalNavigationDrawer(
@@ -262,32 +262,35 @@ fun AppShell(
                 onClose = { scope.launch { drawerState.close() } }
             )
         },
-        scrimColor = Color.Black.copy(alpha = 0.6f)
+        scrimColor = Color(0xFF0F172A).copy(alpha = 0.4f)
     ) {
         Box(modifier = Modifier.fillMaxSize().background(bgBrush)) {
             Column(modifier = Modifier.fillMaxSize()) {
 
                 // Top Bar
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color.White)
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     // Hamburger
                     IconButton(
                         onClick = { scope.launch { drawerState.open() } },
-                        modifier = Modifier.size(36.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.08f))
+                        modifier = Modifier.size(38.dp).clip(CircleShape).background(Color(0xFFF1F5F9))
                     ) {
-                        Icon(Icons.Default.Menu, "Menu", tint = Color.White.copy(alpha = 0.8f), modifier = Modifier.size(20.dp))
+                        Icon(Icons.Default.Menu, "Menu", tint = Color(0xFF0F172A), modifier = Modifier.size(20.dp))
                     }
                     Spacer(Modifier.width(12.dp))
 
                     // App brand
                     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
                         Box(
-                            modifier = Modifier.size(32.dp).clip(RoundedCornerShape(9.dp))
-                                .background(Brush.linearGradient(listOf(Color(0xFF2979FF), AccentTeal))),
+                            modifier = Modifier.size(34.dp).clip(RoundedCornerShape(10.dp))
+                                .background(Brush.linearGradient(listOf(PrimaryIndigo, PrimaryViolet))),
                             contentAlignment = Alignment.Center
-                        ) { Text("VB", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold) }
+                        ) { Text("VB", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Black) }
                         Spacer(Modifier.width(8.dp))
                         Column {
                             Text(
@@ -300,48 +303,63 @@ fun AppShell(
                                      Screen.Home.route         -> "Hindi to English"
                                      else -> "VocalBharat"
                                 },
-                                color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.Bold
+                                color = Color(0xFF0F172A), fontSize = 17.sp, fontWeight = FontWeight.Bold
                             )
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Box(
                                     modifier = Modifier.size(6.dp).clip(CircleShape)
-                                        .background(if (tutorState.isServerOnline) Color(0xFF00E676) else RecordingRed)
+                                        .background(if (tutorState.isServerOnline) Color(0xFF10B981) else RecordingRed)
                                 )
                                 Spacer(Modifier.width(4.dp))
                                 Text(
-                                    text = if (tutorState.isServerOnline) "Online" else "Offline",
-                                    color = if (tutorState.isServerOnline) Color(0xFF00E676) else RecordingRed,
-                                    fontSize = 10.sp
+                                    text = if (tutorState.isServerOnline) "AI Engine Online" else "Offline",
+                                    color = if (tutorState.isServerOnline) Color(0xFF059669) else RecordingRed,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Medium
                                 )
                             }
                         }
                     }
 
                     // Plan Badge / Upgrade CTA
-                    if (!subscriptionState.status.isActive) {
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(100.dp))
-                                .background(Color(0xFF00E676).copy(alpha = 0.15f))
-                                .border(1.dp, Color(0xFF00E676).copy(alpha = 0.4f), RoundedCornerShape(100.dp))
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(100.dp))
+                            .background(
+                                if (subscriptionState.status.isActive) Color(0xFF10B981).copy(alpha = 0.12f)
+                                else PrimaryIndigo.copy(alpha = 0.1f)
+                            )
+                            .border(
+                                1.dp,
+                                if (subscriptionState.status.isActive) Color(0xFF10B981).copy(alpha = 0.4f)
+                                else PrimaryIndigo.copy(alpha = 0.3f),
+                                RoundedCornerShape(100.dp)
+                            )
                             .clickable { navController.navigate(Screen.Subscription.route) }
-                            .padding(horizontal = 10.dp, vertical = 5.dp)
-                        ) {
-                            Text("Upgrade Pro", color = Color(0xFF00E676), fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                        }
-                        Spacer(Modifier.width(8.dp))
+                            .padding(horizontal = 10.dp, vertical = 6.dp)
+                    ) {
+                        Text(
+                            text = if (subscriptionState.status.isActive) "Pro Active ⚡" else "Upgrade Pro",
+                            color = if (subscriptionState.status.isActive) Color(0xFF059669) else PrimaryIndigo,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold
+                        )
                     }
+                    Spacer(Modifier.width(8.dp))
+
 
                     // Settings
                     IconButton(
                         onClick = { tutorViewModel.openSettings() },
-                        modifier = Modifier.size(36.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.08f))
+                        modifier = Modifier.size(38.dp).clip(CircleShape).background(Color(0xFFF1F5F9))
                     ) {
-                        Icon(Icons.Default.Settings, "Settings", tint = Color.White.copy(alpha = 0.7f), modifier = Modifier.size(18.dp))
+                        Icon(Icons.Default.Settings, "Settings", tint = Color(0xFF475569), modifier = Modifier.size(18.dp))
                     }
                 }
 
-                HorizontalDivider(color = Color.White.copy(alpha = 0.06f))
+                HorizontalDivider(color = Color(0xFFE2E8F0))
+
+
 
                 // Nav content
                 NavHost(
@@ -479,51 +497,51 @@ fun AppDrawer(
     onClose: () -> Unit
 ) {
     ModalDrawerSheet(
-        modifier = Modifier.width(270.dp),
-        drawerContainerColor = Color(0xFF0D1B2E),
-        drawerContentColor = Color.White
+        modifier = Modifier.width(280.dp),
+        drawerContainerColor = Color.White,
+        drawerContentColor = Color(0xFF0F172A)
     ) {
         // Drawer Header with User Status
         Box(
             modifier = Modifier.fillMaxWidth().background(
-                Brush.verticalGradient(listOf(Color(0xFF0A2744), Color(0xFF0D1B2E)))
+                Brush.verticalGradient(listOf(Color(0xFFEEF2FF), Color(0xFFFFFFFF)))
             ).padding(20.dp)
         ) {
             Column {
                 Box(
-                    modifier = Modifier.size(48.dp).clip(RoundedCornerShape(14.dp))
-                        .background(Brush.linearGradient(listOf(Color(0xFF2979FF), AccentTeal))),
+                    modifier = Modifier.size(50.dp).clip(RoundedCornerShape(14.dp))
+                        .background(Brush.linearGradient(listOf(PrimaryIndigo, PrimaryViolet))),
                     contentAlignment = Alignment.Center
-                ) { Text("VB", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold) }
+                ) { Text("VB", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Black) }
 
-                Spacer(Modifier.height(10.dp))
-                Text("VocalBharat", color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.Bold)
+                Spacer(Modifier.height(12.dp))
+                Text("VocalBharat", color = Color(0xFF0F172A), fontSize = 18.sp, fontWeight = FontWeight.Bold)
 
                 if (authState.isLoggedIn) {
                     Text(
                         text = authState.userEmail ?: "Logged In",
-                        color = Color.White.copy(alpha = 0.7f),
+                        color = Color(0xFF475569),
                         fontSize = 12.sp,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
-                    Spacer(Modifier.height(4.dp))
+                    Spacer(Modifier.height(6.dp))
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(100.dp))
                             .background(
-                                if (subState.status.isActive) Color(0xFF00E676).copy(alpha = 0.2f)
-                                else Color.White.copy(alpha = 0.1f)
+                                if (subState.status.isActive) Color(0xFF10B981).copy(alpha = 0.15f)
+                                else Color(0xFFF1F5F9)
                             )
-                            .padding(horizontal = 8.dp, vertical = 2.dp)
+                            .padding(horizontal = 10.dp, vertical = 3.dp)
                     ) {
                         Text(
                             text = if (subState.status.isActive)
                                 "⚡ Monthly Pro (${subState.status.daysRemaining}d left)"
-                            else "Free: ${subState.status.requestsUsed}/20",
-                            color = if (subState.status.isActive) Color(0xFF00E676) else AccentTeal,
+                            else "Free: ${subState.status.requestsUsed}/${subState.status.requestsLimit.takeIf { it > 0 } ?: 8}",
+                            color = if (subState.status.isActive) Color(0xFF059669) else Color(0xFF475569),
                             fontSize = 10.sp,
-                            fontWeight = FontWeight.SemiBold
+                            fontWeight = FontWeight.Bold
                         )
                     }
                 } else {
@@ -534,11 +552,13 @@ fun AppDrawer(
                             onClose()
                         }
                     ) {
-                        Text("👋 Guest · Sign in with OTP", color = AccentTeal, fontSize = 11.sp, fontWeight = FontWeight.Medium)
+                        Text("👋 Guest · Sign in with OTP", color = PrimaryIndigo, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
                     }
                 }
             }
         }
+
+
 
         HorizontalDivider(color = Color.White.copy(alpha = 0.08f))
         Spacer(Modifier.height(8.dp))
@@ -605,11 +625,11 @@ fun HomeScreenContent(
         AlertDialog(
             onDismissRequest = { showQuotaDialog = false },
             title = {
-                Text("🌟 20 Free Practice Limit Reached", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                Text("🌟 8 Free Practice Limit Reached", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
             },
             text = {
                 Text(
-                    "You have completed your 20 free spoken English sessions! Please choose a subscription plan to continue learning with unlimited AI coaching.",
+                    "You have completed your 8 free spoken English sessions! Please choose a subscription plan to continue learning with unlimited AI coaching.",
                     color = Color.White.copy(alpha = 0.85f),
                     fontSize = 14.sp
                 )
@@ -622,7 +642,7 @@ fun HomeScreenContent(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2979FF))
                 ) {
-                    Text("View Plans (₹300/mo)", fontWeight = FontWeight.Bold)
+                    Text("View Plans (₹120/mo)", fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {

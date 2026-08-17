@@ -56,21 +56,21 @@ def test_complete_auth_and_subscription_flow():
     res = client.get("/subscription/plans")
     assert res.status_code == 200
     plans = res.json()["plans"]
-    assert any(p["id"] == "monthly" and p["amount"] == 300 and p["duration_days"] == 30 for p in plans)
+    assert any(p["id"] == "monthly" and p["amount"] == 120 and p["duration_days"] == 30 for p in plans)
 
     # 5. Check initial subscription status (should be false/free tier)
     res = client.get("/subscription/status", headers=headers)
     assert res.status_code == 200
     status_data = res.json()
     assert status_data["is_active"] is False
-    assert status_data["requests_limit"] == 20
+    assert status_data["requests_limit"] == 8
 
-    # 6. Initiate Monthly Plan (₹300)
+    # 6. Initiate Monthly Plan (₹120)
     res = client.post("/subscription/initiate", json={"plan": "monthly"}, headers=headers)
     assert res.status_code == 200, res.text
     init_data = res.json()
     order_id = init_data["order_id"]
-    assert init_data["amount"] == 300
+    assert init_data["amount"] == 120
 
     # 7. Confirm payment
     from app.core.config import settings

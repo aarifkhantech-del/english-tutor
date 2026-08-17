@@ -32,8 +32,8 @@ const state = {
     hasSubscription: false,
     plan: null,
     requestsUsed: 0,
-    requestsLimit: 20,
-    requestsRemaining: 20,
+    requestsLimit: 8,
+    requestsRemaining: 8,
     daysRemaining: 0,
     quotaExceeded: false,
   },
@@ -687,7 +687,20 @@ function logoutUser() {
   state.userEmail = null;
   localStorage.removeItem("vb_auth_token");
   localStorage.removeItem("vb_user_email");
+  state.subscription = {
+    isActive: false,
+    hasSubscription: false,
+    plan: null,
+    startsAt: null,
+    expiresAt: null,
+    requestsUsed: 0,
+    requestsLimit: 8,
+    requestsRemaining: 8,
+    daysRemaining: 0,
+    quotaExceeded: false,
+  };
   updateAccountUI();
+  renderSubscriptionUI();
   loadSubscriptionStatus();
   closeAccountModal();
   showToast("You have been signed out.", "info");
@@ -707,22 +720,57 @@ async function loadSubscriptionStatus() {
       state.subscription = {
         isActive: data.is_active || false,
         hasSubscription: data.has_subscription || false,
-        plan: data.plan,
+        plan: data.plan || null,
+        startsAt: data.starts_at || null,
+        expiresAt: data.expires_at || null,
         requestsUsed: data.requests_used || 0,
-        requestsLimit: data.requests_limit || 20,
-        requestsRemaining: data.requests_remaining || 0,
+        requestsLimit: data.requests_limit || 8,
+        requestsRemaining: (data.requests_remaining !== undefined) ? data.requests_remaining : 8,
         daysRemaining: data.days_remaining || 0,
         quotaExceeded: data.quota_exceeded || false,
       };
-      renderSubscriptionUI();
+    } else {
+      if (!state.token) {
+        state.subscription = {
+          isActive: false,
+          hasSubscription: false,
+          plan: null,
+          startsAt: null,
+          expiresAt: null,
+          requestsUsed: 0,
+          requestsLimit: 8,
+          requestsRemaining: 8,
+          daysRemaining: 0,
+          quotaExceeded: false,
+        };
+      }
     }
   } catch (err) {
     console.warn("Could not load subscription status:", err);
+  } finally {
+    renderSubscriptionUI();
+  }
+}
+
+function formatSubDate(isoStr) {
+  if (!isoStr) return "";
+  try {
+    const d = new Date(isoStr);
+    if (isNaN(d.getTime())) return isoStr;
+    return d.toLocaleDateString("en-IN", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  } catch (e) {
+    return isoStr;
   }
 }
 
 function renderSubscriptionUI() {
   const sub = state.subscription;
+  const startDateStr = formatSubDate(sub.startsAt);
+  const endDateStr = formatSubDate(sub.expiresAt);
 
   // Banner
   const banner = document.getElementById("quotaBanner");
@@ -737,7 +785,7 @@ function renderSubscriptionUI() {
   // Quota Nav Badge
   const badge = document.getElementById("quotaBadge");
   if (sub.isActive) {
-    badge.textContent = `Pro (${sub.daysRemaining}d)`;
+    badge.textContent = `Pro (${sub.daysRemaining}d left)`;
     badge.style.background = "rgba(0, 230, 118, 0.2)";
     badge.style.color = "#00E676";
   } else {
@@ -751,25 +799,89 @@ function renderSubscriptionUI() {
   const leftLabel = document.getElementById("progressLabelLeft");
   const rightLabel = document.getElementById("progressLabelRight");
   const barFill = document.getElementById("progressBarFill");
+  const subDatesRow = document.getElementById("subDatesRow");
+  const subStartDateText = document.getElementById("subStartDateText");
+  const subEndDateText = document.getElementById("subEndDateText");
 
   if (sub.isActive) {
-    subStatusText.textContent = `⚡ Monthly Pro Active (${sub.daysRemaining} days left)`;
+    subStatusText.innerHTML = `👑 Monthly Pro Active <span style="color:#00E676; font-size:12px; font-weight:600; margin-left:8px;">(No payment required)</span>`;
     leftLabel.textContent = `Unlimited AI Coaching Enabled`;
-    rightLabel.textContent = `Active Plan`;
+    rightLabel.textContent = `Next renewal: ${endDateStr || (sub.daysRemaining + ' days left')}`;
     barFill.style.width = `100%`;
+
+    if (subDatesRow) {
+      subDatesRow.style.display = "flex";
+      if (subStartDateText) subStartDateText.textContent = startDateStr || "Today";
+      if (subEndDateText) subEndDateText.textContent = `${endDateStr} (${sub.daysRemaining} days left)`;
+    }
   } else {
     subStatusText.textContent = `Free Starter Plan`;
     leftLabel.textContent = `Usage: ${sub.requestsUsed} / ${sub.requestsLimit} requests used`;
     rightLabel.textContent = `${sub.requestsRemaining} remaining`;
     const pct = Math.min(100, Math.round((sub.requestsUsed / sub.requestsLimit) * 100));
     barFill.style.width = `${pct}%`;
+
+    if (subDatesRow) {
+      subDatesRow.style.display = "none";
+    }
   }
 
   // Profile modal badges
   document.getElementById("profileRequestsCount").textContent = sub.isActive ? "Unlimited" : `${sub.requestsRemaining} left`;
-  document.getElementById("profileSubStatus").textContent = sub.isActive ? `Monthly Pro (${sub.daysRemaining} days left)` : "Free Tier (20 limit)";
+  document.getElementById("profileSubStatus").textContent = sub.isActive 
+    ? `Monthly Pro (Valid: ${startDateStr} - ${endDateStr})` 
+    : `Free Tier (${sub.requestsLimit} limit)`;
   document.getElementById("profilePlanBadge").textContent = sub.isActive ? "Active Plan: Monthly Pro" : "Active Plan: Free Tier";
+
+  // Pro Pricing Button State & Active Plan Badge
+  const btnProCheckout = document.getElementById("btnProCheckout");
+  const payText = document.getElementById("btnPayText");
+  const btnCheckStatus = document.getElementById("btnCheckStatus");
+  const devHelper = document.querySelector(".dev-checkout-helper");
+  const navUpgradeBtn = document.querySelector(".btn-upgrade-nav");
+
+  if (sub.isActive) {
+    if (btnProCheckout) {
+      btnProCheckout.disabled = true;
+      btnProCheckout.className = "btn-plan-action btn-plan-active";
+      btnProCheckout.innerHTML = `<i class="fa-solid fa-circle-check"></i> <span>Active Plan — Valid until ${endDateStr || (sub.daysRemaining + ' days left')}</span>`;
+    }
+    if (btnCheckStatus) {
+      btnCheckStatus.style.display = "none";
+    }
+    if (devHelper) {
+      devHelper.style.display = "none";
+    }
+    if (navUpgradeBtn) {
+      navUpgradeBtn.style.background = "rgba(0, 230, 118, 0.15)";
+      navUpgradeBtn.style.borderColor = "rgba(0, 230, 118, 0.4)";
+      navUpgradeBtn.style.color = "#00E676";
+      navUpgradeBtn.title = `Active until ${endDateStr}`;
+      navUpgradeBtn.innerHTML = `<i class="fa-solid fa-crown"></i> <span>Pro Active</span>`;
+    }
+  } else {
+    if (btnProCheckout) {
+      btnProCheckout.disabled = false;
+      btnProCheckout.className = "btn-plan-action btn-pro-checkout";
+      btnProCheckout.innerHTML = `<i class="fa-solid fa-lock"></i> <span id="btnPayText">Upgrade to Monthly Pro (₹120)</span><span class="spinner hidden" id="checkoutSpinner"></span>`;
+    }
+    if (btnCheckStatus) {
+      btnCheckStatus.style.display = "flex";
+    }
+    if (devHelper) {
+      devHelper.style.display = "block";
+    }
+    if (navUpgradeBtn) {
+      navUpgradeBtn.style.background = "";
+      navUpgradeBtn.style.borderColor = "";
+      navUpgradeBtn.style.color = "";
+      navUpgradeBtn.title = "";
+      navUpgradeBtn.innerHTML = `<i class="fa-solid fa-bolt"></i> <span>Upgrade Pro</span>`;
+    }
+  }
 }
+
+
 
 // ── Razorpay Checkout Flow ──────────────────────────────────────────────────
 async function startCheckoutFlow() {
@@ -799,7 +911,7 @@ async function startCheckoutFlow() {
     });
 
     spinner.classList.add("hidden");
-    payText.textContent = "Upgrade to Monthly Pro (₹300)";
+    payText.textContent = "Upgrade to Monthly Pro (₹120)";
     btn.disabled = false;
 
     if (!res.ok) {
@@ -813,7 +925,7 @@ async function startCheckoutFlow() {
 
   } catch (err) {
     spinner.classList.add("hidden");
-    payText.textContent = "Upgrade to Monthly Pro (₹300)";
+    payText.textContent = "Upgrade to Monthly Pro (₹120)";
     btn.disabled = false;
     showToast("Network error initiating payment.", "error");
   }
@@ -835,7 +947,7 @@ function openRazorpayModal(orderOut) {
 
   const options = {
     key: key,
-    amount: (orderOut.amount || 300) * 100, // paise
+    amount: (orderOut.amount || 120) * 100, // paise
     currency: orderOut.currency || "INR",
     name: "VocalBharat",
     description: "Monthly Pro Unlimited Pass",

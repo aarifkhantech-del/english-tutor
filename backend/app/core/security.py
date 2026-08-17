@@ -94,9 +94,9 @@ def verify_usage_quota(
     db: Session = Depends(get_db),
 ):
     """
-    Enforces 20-request quota for free tier.
+    Enforces 8-request quota for free tier.
     If user is authenticated and has active subscription -> unlimited access.
-    If requests >= FREE_REQUESTS_LIMIT (20) and no active plan -> raises 402.
+    If requests >= FREE_REQUESTS_LIMIT (8) and no active plan -> raises 402.
     """
     if user is None:
         return None

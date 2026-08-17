@@ -76,12 +76,12 @@ class Settings:
     OTP_RATE_LIMIT_WINDOW_MINUTES: int = int(os.getenv("OTP_RATE_LIMIT_WINDOW_MINUTES", "60"))
 
     # ── Usage Quota ───────────────────────────────────────────────────────────
-    FREE_REQUESTS_LIMIT: int = int(os.getenv("FREE_REQUESTS_LIMIT", "20"))
+    FREE_REQUESTS_LIMIT: int = int(os.getenv("FREE_REQUESTS_LIMIT", "8"))
 
     # ── Payment ───────────────────────────────────────────────────────────────
     # Set to 'razorpay', 'cashfree', or 'stripe' when ready
     PAYMENT_GATEWAY: str = os.getenv("PAYMENT_GATEWAY", "mock")
-    PAYMENT_MONTHLY_AMOUNT: int = int(os.getenv("PAYMENT_MONTHLY_AMOUNT", "300"))
+    PAYMENT_MONTHLY_AMOUNT: int = int(os.getenv("PAYMENT_MONTHLY_AMOUNT", "120"))
     PAYMENT_CURRENCY: str = os.getenv("PAYMENT_CURRENCY", "INR")
 
     # Razorpay

@@ -44,7 +44,7 @@ data class SubscriptionStatusOut(
     @SerializedName("expires_at") val expiresAt: String? = null,
     @SerializedName("days_remaining") val daysRemaining: Int = 0,
     @SerializedName("requests_used") val requestsUsed: Int = 0,
-    @SerializedName("requests_limit") val requestsLimit: Int = 20,
-    @SerializedName("requests_remaining") val requestsRemaining: Int = 20,
+    @SerializedName("requests_limit") val requestsLimit: Int = 8,
+    @SerializedName("requests_remaining") val requestsRemaining: Int = 8,
     @SerializedName("quota_exceeded") val quotaExceeded: Boolean = false
 )

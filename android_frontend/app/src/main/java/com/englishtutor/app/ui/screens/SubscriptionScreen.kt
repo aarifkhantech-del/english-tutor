@@ -132,11 +132,36 @@ fun SubscriptionScreen(
 
                     if (uiState.status.isActive && uiState.status.plan != null) {
                         Text(
-                            text = "Plan: Monthly Pro (₹300/mo) · Active",
+                            text = "Plan: Monthly Pro (₹120/mo) · Active ⚡",
                             color = Color(0xFF00E676),
                             fontSize = 12.sp,
-                            fontWeight = FontWeight.SemiBold
+                            fontWeight = FontWeight.Bold
                         )
+                        Spacer(Modifier.height(4.dp))
+                        val startFormatted = formatIsoDate(uiState.status.startsAt)
+                        val endFormatted = formatIsoDate(uiState.status.expiresAt)
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 4.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            if (startFormatted.isNotEmpty()) {
+                                Text(
+                                    text = "Started: $startFormatted",
+                                    color = Color.White.copy(alpha = 0.7f),
+                                    fontSize = 11.sp
+                                )
+                            }
+                            if (endFormatted.isNotEmpty()) {
+                                Text(
+                                    text = "Valid Until: $endFormatted",
+                                    color = Color(0xFF00E676),
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
+                        }
                     } else {
                         Text(
                             text = "Free Tier: ${uiState.status.requestsUsed} / ${uiState.status.requestsLimit} requests used (${uiState.status.requestsRemaining} left)",
@@ -159,10 +184,11 @@ fun SubscriptionScreen(
                     .padding(12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
+
                 Icon(Icons.Default.Info, null, tint = AccentTeal, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(8.dp))
                 Text(
-                    text = "Sign in with email to activate your 20 free requests and keep your subscription across devices.",
+                    text = "Sign in with email to activate your 8 free requests and keep your subscription across devices.",
                     color = Color.White.copy(alpha = 0.85f),
                     fontSize = 12.sp,
                     modifier = Modifier.weight(1f)
@@ -202,13 +228,16 @@ fun SubscriptionScreen(
 
         // ── Plan Cards ──
         val plans = if (uiState.plans.isNotEmpty()) uiState.plans else listOf(
-            PlanInfo("monthly", "Monthly Pro Plan", "Unlimited access to all AI coaching and grammar tools.", 300, "INR", 30, "Recommended")
+            PlanInfo("monthly", "Monthly Pro Plan", "Unlimited access to all AI coaching and grammar tools.", 120, "INR", 30, "Recommended")
         )
 
         plans.forEach { plan ->
             PlanCard(
                 plan = plan,
                 isSelected = uiState.selectedPlanId == plan.id,
+                isActive = uiState.status.isActive,
+                daysRemaining = uiState.status.daysRemaining,
+                expiresAt = uiState.status.expiresAt,
                 isProcessing = uiState.isProcessingPayment && uiState.selectedPlanId == plan.id,
                 onSelect = { onSelectPlan(plan.id) },
                 onSubscribe = { onSubscribe(plan.id) }
@@ -216,23 +245,25 @@ fun SubscriptionScreen(
             Spacer(Modifier.height(16.dp))
         }
 
-        // ── Already Paid Check Button (for UPI QR) ──
-        OutlinedButton(
-            onClick = onCheckStatus,
-            enabled = !uiState.isProcessingPayment,
-            modifier = Modifier.fillMaxWidth().height(46.dp),
-            shape = RoundedCornerShape(12.dp),
-            colors = ButtonDefaults.outlinedButtonColors(
-                contentColor = Color(0xFF5393FF)
-            ),
-            border = BorderStroke(1.dp, Color(0xFF2979FF).copy(alpha = 0.5f))
-        ) {
-            Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
-            Spacer(Modifier.width(8.dp))
-            Text("Already Paid via UPI? Check Status", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+        // ── Already Paid Check Button (only when not active) ──
+        if (!uiState.status.isActive) {
+            OutlinedButton(
+                onClick = onCheckStatus,
+                enabled = !uiState.isProcessingPayment,
+                modifier = Modifier.fillMaxWidth().height(46.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = Color(0xFF5393FF)
+                ),
+                border = BorderStroke(1.dp, Color(0xFF2979FF).copy(alpha = 0.5f))
+            ) {
+                Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(8.dp))
+                Text("Already Paid via UPI? Check Status", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+            }
+            Spacer(Modifier.height(12.dp))
         }
 
-        Spacer(Modifier.height(12.dp))
         Text(
             text = "🔒 Secured by Razorpay · UPI, Cards, NetBanking",
             color = Color.White.copy(alpha = 0.5f),
@@ -247,24 +278,30 @@ fun SubscriptionScreen(
 fun PlanCard(
     plan: PlanInfo,
     isSelected: Boolean,
+    isActive: Boolean = false,
+    daysRemaining: Int = 0,
+    expiresAt: String? = null,
     isProcessing: Boolean,
     onSelect: () -> Unit,
     onSubscribe: () -> Unit
 ) {
+    val endFormatted = formatIsoDate(expiresAt)
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
             .background(
-                if (isSelected) Color(0xFF2979FF).copy(alpha = 0.12f)
+                if (isActive) Color(0xFF00E676).copy(alpha = 0.08f)
+                else if (isSelected) Color(0xFF2979FF).copy(alpha = 0.12f)
                 else Color.White.copy(alpha = 0.04f)
             )
             .border(
-                width = if (isSelected) 2.dp else 1.dp,
-                color = if (isSelected) AccentTeal else Color.White.copy(alpha = 0.12f),
+                width = if (isActive || isSelected) 2.dp else 1.dp,
+                color = if (isActive) Color(0xFF00E676) else if (isSelected) AccentTeal else Color.White.copy(alpha = 0.12f),
                 shape = RoundedCornerShape(20.dp)
             )
-            .clickable(onClick = onSelect)
+            .clickable(enabled = !isActive, onClick = onSelect)
             .padding(20.dp)
     ) {
         Column {
@@ -281,7 +318,7 @@ fun PlanCard(
                         .padding(horizontal = 10.dp, vertical = 4.dp)
                 ) {
                     Text(
-                        text = plan.badge ?: "Unlimited Pro",
+                        text = if (isActive) "✔ ACTIVE PLAN" else (plan.badge ?: "Unlimited Pro"),
                         color = Color(0xFF00E676),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold
@@ -355,26 +392,73 @@ fun PlanCard(
 
             Spacer(Modifier.height(16.dp))
 
-            Button(
-                onClick = onSubscribe,
-                enabled = !isProcessing,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF2979FF)
-                ),
-                shape = RoundedCornerShape(12.dp),
-                modifier = Modifier.fillMaxWidth().height(44.dp)
-            ) {
-                if (isProcessing) {
-                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
-                } else {
-                    Text(
-                        text = "🚀 Upgrade to Monthly Pro (₹300)",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold
+            if (isActive) {
+                Button(
+                    onClick = {},
+                    enabled = false,
+                    colors = ButtonDefaults.buttonColors(
+                        disabledContainerColor = Color(0xFF00E676).copy(alpha = 0.15f),
+                        disabledContentColor = Color(0xFF00E676)
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    border = BorderStroke(1.dp, Color(0xFF00E676).copy(alpha = 0.5f)),
+                    modifier = Modifier.fillMaxWidth().height(44.dp)
+                ) {
+                    Icon(
+                        Icons.Default.CheckCircle,
+                        contentDescription = null,
+                        tint = Color(0xFF00E676),
+                        modifier = Modifier.size(18.dp)
                     )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        text = if (endFormatted.isNotEmpty()) "Active Plan — Valid until $endFormatted" else "Active Plan ($daysRemaining days left)",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF00E676)
+                    )
+                }
+            } else {
+                Button(
+                    onClick = onSubscribe,
+                    enabled = !isProcessing,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF2979FF)
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth().height(44.dp)
+                ) {
+                    if (isProcessing) {
+                        CircularProgressIndicator(color = Color.White, modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                    } else {
+                        Text(
+                            text = "🚀 Upgrade to Monthly Pro (₹120)",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
 
         }
     }
 }
+
+fun formatIsoDate(isoString: String?): String {
+    if (isoString.isNullOrBlank()) return ""
+    return try {
+        val cleaned = isoString.substringBefore(".").substringBefore("Z")
+        val parsed = java.time.LocalDateTime.parse(cleaned, java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+        parsed.format(java.time.format.DateTimeFormatter.ofPattern("d MMM yyyy"))
+    } catch (_: Exception) {
+        try {
+            val dateOnly = isoString.take(10)
+            val parsedDate = java.time.LocalDate.parse(dateOnly)
+            parsedDate.format(java.time.format.DateTimeFormatter.ofPattern("d MMM yyyy"))
+        } catch (_: Exception) {
+            isoString
+        }
+    }
+}
+
+

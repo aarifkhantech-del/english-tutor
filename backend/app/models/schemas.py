@@ -148,9 +148,9 @@ class SubscriptionStatusOut(BaseModel):
     expires_at: Optional[datetime] = None
     days_remaining: int = 0
     requests_used: int = 0               # Number of requests used
-    requests_limit: int = 20             # Free tier limit (20 requests)
-    requests_remaining: int = 20         # Remaining free requests
-    quota_exceeded: bool = False         # True if >= 20 and no active subscription
+    requests_limit: int = 8              # Free tier limit (8 requests)
+    requests_remaining: int = 8          # Remaining free requests
+    quota_exceeded: bool = False         # True if >= 8 and no active subscription
 
 
 class WebhookPayload(BaseModel):
