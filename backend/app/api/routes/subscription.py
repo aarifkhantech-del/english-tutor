@@ -22,6 +22,7 @@ from app.core.database import get_db
 from app.core.security import get_current_user
 from app.models.db_models import Payment, Subscription, User
 from app.models.schemas import (
+    CheckOrderIn,
     ConfirmPaymentIn,
     InitiatePaymentIn,
     InitiatePaymentOut,
@@ -193,6 +194,74 @@ async def confirm_payment(
     )
 
     return _build_status(current_user, db)
+
+
+# ── Check order status directly (e.g. for UPI QR Scan) ───────────────────────
+
+@router.post(
+    "/check-order",
+    response_model=SubscriptionStatusOut,
+    summary="Check order status with payment gateway",
+    description=(
+        "Directly queries Razorpay to verify if an order was paid (e.g. via UPI QR scan). "
+        "Activates the subscription immediately if payment is verified on the gateway."
+    ),
+)
+async def check_order_status_endpoint(
+    payload: CheckOrderIn = Body(default_factory=CheckOrderIn),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    query = db.query(Payment).filter(Payment.user_id == current_user.id)
+    if payload.order_id:
+        payment: Payment | None = query.filter(Payment.gateway_order_id == payload.order_id).first()
+    else:
+        # Check the latest pending payment
+        payment = query.filter(Payment.status == "pending").order_by(Payment.created_at.desc()).first()
+
+    if not payment:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No order found to check. If you made a payment, please ensure you are signed in with the same email.",
+        )
+
+    subscription: Subscription | None = (
+        db.query(Subscription).filter(Subscription.id == payment.subscription_id).first()
+    )
+
+    # If already active, return current status
+    if payment.status == "captured" and subscription and subscription.status == "active":
+        return _build_status(current_user, db)
+
+    # Query gateway API directly
+    gw = gateway()
+    result = await gw.check_order_status(payment.gateway_order_id)
+
+    if not result.success:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=result.message,
+        )
+
+    # Activate subscription
+    now = _now()
+    duration_days = 30
+    if subscription:
+        subscription.status = "active"
+        subscription.starts_at = now
+        subscription.expires_at = now + timedelta(days=duration_days)
+
+    payment.status = "captured"
+    payment.gateway_payment_id = result.payment_id
+    db.commit()
+
+    logger.info(
+        "Subscription activated via check-order | user=%s | order=%s | payment=%s",
+        current_user.email, payment.gateway_order_id, result.payment_id
+    )
+
+    return _build_status(current_user, db)
+
 
 
 # ── Webhook handler ───────────────────────────────────────────────────────────

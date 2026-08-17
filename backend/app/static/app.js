@@ -819,6 +819,8 @@ async function startCheckoutFlow() {
   }
 }
 
+let orderPollingTimer = null;
+
 function openRazorpayModal(orderOut) {
   if (typeof Razorpay === "undefined") {
     showToast("Razorpay SDK not loaded. Please check your internet connection.", "error");
@@ -826,6 +828,10 @@ function openRazorpayModal(orderOut) {
   }
 
   const key = orderOut.gateway_key || state.razorpayKeyId || "rzp_test_TQNC46en6BBlI1";
+  localStorage.setItem("vb_last_order_id", orderOut.order_id);
+
+  // Start background auto-polling every 4 seconds for UPI QR scan payments
+  startOrderPolling(orderOut.order_id);
 
   const options = {
     key: key,
@@ -843,6 +849,7 @@ function openRazorpayModal(orderOut) {
     },
     handler: async function (response) {
       console.log("Razorpay payment success response:", response);
+      stopOrderPolling();
       await confirmPaymentOnServer({
         order_id: response.razorpay_order_id || orderOut.order_id,
         payment_id: response.razorpay_payment_id,
@@ -851,7 +858,9 @@ function openRazorpayModal(orderOut) {
     },
     modal: {
       ondismiss: function () {
-        showToast("Payment window closed.", "info");
+        console.log("Razorpay modal dismissed. Checking if payment was completed in background...");
+        // Do one quick check on dismiss just in case user completed UPI scan and closed window
+        setTimeout(() => checkPaymentStatusManual(orderOut.order_id, false), 1500);
       },
     },
   };
@@ -861,11 +870,103 @@ function openRazorpayModal(orderOut) {
     rzp.on("payment.failed", function (resp) {
       console.error("Payment failed event:", resp);
       showToast(resp.error?.description || "Payment was not completed.", "error");
+      stopOrderPolling();
     });
     rzp.open();
   } catch (e) {
     console.error("Razorpay open error:", e);
     showToast("Failed to open Razorpay modal: " + e.message, "error");
+    stopOrderPolling();
+  }
+}
+
+function startOrderPolling(orderId) {
+  stopOrderPolling();
+  let attempts = 0;
+  const maxAttempts = 45; // 45 * 4s = 3 minutes
+
+  orderPollingTimer = setInterval(async () => {
+    attempts++;
+    if (attempts > maxAttempts || !state.token) {
+      stopOrderPolling();
+      return;
+    }
+
+    try {
+      const res = await fetch("/subscription/check-order", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${state.token}`,
+        },
+        body: JSON.stringify({ order_id: orderId }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.is_active) {
+          stopOrderPolling();
+          showToast("🎉 Payment detected! Monthly Pro is now ACTIVE!", "success");
+          await loadSubscriptionStatus();
+          navigateTo("tutor");
+        }
+      }
+    } catch (err) {
+      // Ignore background poll errors
+    }
+  }, 4000);
+}
+
+function stopOrderPolling() {
+  if (orderPollingTimer) {
+    clearInterval(orderPollingTimer);
+    orderPollingTimer = null;
+  }
+}
+
+async function checkPaymentStatusManual(orderId = null, showLoaderModal = true) {
+  if (!state.token) {
+    showToast("Please sign in first with the email used during payment.", "info");
+    openAccountModal();
+    return;
+  }
+
+  const targetOrderId = orderId || localStorage.getItem("vb_last_order_id") || null;
+
+  if (showLoaderModal) {
+    showLoader("Checking payment status directly with Razorpay gateway...");
+  }
+
+  try {
+    const res = await fetch("/subscription/check-order", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${state.token}`,
+      },
+      body: JSON.stringify({ order_id: targetOrderId }),
+    });
+
+    if (showLoaderModal) hideLoader();
+
+    if (res.ok) {
+      const data = await res.json();
+      if (data.is_active) {
+        showToast("🎉 Verified! Your Monthly Pro Plan is ACTIVE!", "success");
+        await loadSubscriptionStatus();
+        navigateTo("tutor");
+      } else {
+        showToast("Payment status: Not yet completed.", "info");
+      }
+    } else {
+      const err = await res.json().catch(() => ({ detail: "Order status check failed" }));
+      if (showLoaderModal) {
+        showToast(err.detail || "Payment not yet confirmed. If you just paid, please wait a moment.", "error");
+      }
+    }
+  } catch (err) {
+    if (showLoaderModal) hideLoader();
+    if (showLoaderModal) showToast("Error connecting to server to check payment status.", "error");
   }
 }
 
@@ -897,6 +998,7 @@ async function confirmPaymentOnServer(payload) {
     showToast("Error confirming payment with server.", "error");
   }
 }
+
 
 // ── Instant Simulated Payment (Dev & Testing) ──────────────────────────────
 async function startSimulatedPayment() {

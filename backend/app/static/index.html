@@ -434,6 +434,12 @@
               <span class="spinner hidden" id="checkoutSpinner"></span>
             </button>
 
+            <!-- Check Payment Status Button (For UPI QR Scans) -->
+            <button class="btn-plan-action btn-check-status" id="btnCheckStatus" onclick="checkPaymentStatusManual()" style="margin-top:10px; background:rgba(41,121,255,0.15); border:1px solid rgba(41,121,255,0.4); color:#60A5FA;">
+              <i class="fa-solid fa-arrows-rotate"></i>
+              <span>Already Paid via UPI? Check Status</span>
+            </button>
+
             <!-- Test mode helper / Simulated Payment Button -->
             <div class="dev-checkout-helper">
               <button class="btn-simulated-pay" onclick="startSimulatedPayment()" title="Simulate payment confirmation without external gateway">
@@ -442,6 +448,7 @@
             </div>
           </div>
         </div>
+
 
         <!-- Security & Payment Methods Trust Strip -->
         <div class="trust-strip">

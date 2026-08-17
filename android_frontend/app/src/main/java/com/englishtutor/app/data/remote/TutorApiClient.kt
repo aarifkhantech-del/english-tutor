@@ -395,7 +395,44 @@ class TutorApiClient {
         }
     }
 
+    suspend fun checkOrderStatus(
+        baseUrl: String,
+        token: String,
+        orderId: String? = null
+    ): Result<SubscriptionStatusOut> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val cleanUrl = baseUrl.trimEnd('/')
+                val json = JsonObject().apply {
+                    if (orderId != null) addProperty("order_id", orderId)
+                }
+                val mediaType = "application/json; charset=utf-8".toMediaTypeOrNull()
+                val body = gson.toJson(json).toRequestBody(mediaType)
+
+                val request = Request.Builder()
+                    .url("$cleanUrl/subscription/check-order")
+                    .addHeader("Authorization", "Bearer $token")
+                    .post(body)
+                    .build()
+
+                client.newCall(request).execute().use { response ->
+                    val jsonString = response.body?.string() ?: ""
+                    if (!response.isSuccessful) {
+                        return@withContext Result.failure(
+                            Exception(parseErrorMessage(jsonString, "Payment status check failed (${response.code})"))
+                        )
+                    }
+                    val out = gson.fromJson(jsonString, SubscriptionStatusOut::class.java)
+                    Result.success(out)
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+    }
+
     suspend fun getSubscriptionStatus(baseUrl: String, token: String): Result<SubscriptionStatusOut> {
+
         return withContext(Dispatchers.IO) {
             try {
                 val cleanUrl = baseUrl.trimEnd('/')

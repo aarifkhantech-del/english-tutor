@@ -391,8 +391,17 @@ fun AppShell(
                             onNavigateToLogin = { navController.navigate(Screen.Login.route) },
                             onOpenWebCheckout = {
                                 onOpenWebCheckout("${tutorState.serverUrl}/checkout")
+                            },
+                            onCheckStatus = {
+                                subscriptionViewModel.checkOrderStatus(
+                                    serverUrl = tutorState.serverUrl,
+                                    onSuccess = {
+                                        Toast.makeText(navController.context, "🎉 Monthly Pro Plan is now ACTIVE!", Toast.LENGTH_LONG).show()
+                                    }
+                                )
                             }
                         )
+
                     }
 
                     composable(Screen.Login.route) {

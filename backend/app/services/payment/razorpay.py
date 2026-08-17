@@ -100,6 +100,50 @@ class RazorpayGateway(PaymentGateway):
             message="Payment verified." if valid else "Payment signature validation failed.",
         )
 
+    async def check_order_status(self, order_id: str) -> VerifyResult:
+        """
+        Check order status directly with Razorpay API.
+        Useful when frontend webhook/callback is delayed or user pays via UPI QR scan.
+        """
+        try:
+            order = self._client.order.fetch(order_id)
+            order_status = order.get("status", "")
+            amount_paid = order.get("amount_paid", 0)
+
+            # Check payments linked to this order
+            payments_res = self._client.order.payments(order_id)
+            items = payments_res.get("items", []) if isinstance(payments_res, dict) else []
+
+            captured_payment = next(
+                (p for p in items if p.get("status") in ("captured", "authorized")),
+                None
+            )
+
+            if order_status == "paid" or amount_paid > 0 or captured_payment:
+                pay_id = (captured_payment.get("id") if captured_payment else None) or (items[0].get("id") if items else f"pay_order_{order_id}")
+                logger.info("Razorpay order %s is verified as PAID (payment_id=%s)", order_id, pay_id)
+                return VerifyResult(
+                    success=True,
+                    payment_id=pay_id,
+                    order_id=order_id,
+                    message="Payment verified directly from Razorpay.",
+                )
+
+            return VerifyResult(
+                success=False,
+                payment_id="",
+                order_id=order_id,
+                message=f"Order status on Razorpay is '{order_status}'. Payment not yet confirmed.",
+            )
+        except Exception as e:
+            logger.error("Error fetching Razorpay order %s: %s", order_id, e)
+            return VerifyResult(
+                success=False,
+                payment_id="",
+                order_id=order_id,
+                message=f"Could not verify with Razorpay: {str(e)}",
+            )
+
     def verify_webhook_signature(self, body: bytes, headers: dict) -> bool:
         """Validate the X-Razorpay-Signature webhook header."""
         received = headers.get("x-razorpay-signature", "")
@@ -109,3 +153,4 @@ class RazorpayGateway(PaymentGateway):
         if not valid:
             logger.warning("Razorpay webhook signature mismatch")
         return valid
+

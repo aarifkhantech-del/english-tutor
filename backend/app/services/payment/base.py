@@ -59,8 +59,16 @@ class PaymentGateway(ABC):
         """
 
     @abstractmethod
+    async def check_order_status(self, order_id: str) -> VerifyResult:
+        """
+        Directly query gateway API to check if an order has been paid.
+        Useful when webhook or JS callback is delayed/missed (e.g. UPI QR scan).
+        """
+
+    @abstractmethod
     def verify_webhook_signature(self, body: bytes, headers: dict) -> bool:
         """
         Validate that an incoming webhook request genuinely came from this gateway.
         Returns True if the signature is valid.
         """
+

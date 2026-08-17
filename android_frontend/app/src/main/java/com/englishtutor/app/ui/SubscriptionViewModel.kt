@@ -172,6 +172,49 @@ class SubscriptionViewModel(application: Application) : AndroidViewModel(applica
         }
     }
 
+    fun checkOrderStatus(
+        serverUrl: String,
+        orderId: String? = null,
+        onSuccess: () -> Unit = {}
+    ) {
+        val token = sessionManager.getAuthToken()
+        if (token == null) {
+            _uiState.update { it.copy(errorMessage = "Please sign in first with your email.") }
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.update { it.copy(isProcessingPayment = true, errorMessage = null, successMessage = null) }
+            val result = apiClient.checkOrderStatus(serverUrl, token, orderId)
+            result.onSuccess { newStatus ->
+                if (newStatus.isActive) {
+                    _uiState.update {
+                        it.copy(
+                            isProcessingPayment = false,
+                            status = newStatus,
+                            successMessage = "🎉 Payment verified directly with Razorpay! Monthly Pro is ACTIVE!"
+                        )
+                    }
+                    onSuccess()
+                } else {
+                    _uiState.update {
+                        it.copy(
+                            isProcessingPayment = false,
+                            errorMessage = "Payment not yet confirmed by Razorpay. If you just paid via UPI, please wait 5-10 seconds and try again."
+                        )
+                    }
+                }
+            }.onFailure { err ->
+                _uiState.update {
+                    it.copy(
+                        isProcessingPayment = false,
+                        errorMessage = err.message ?: "Failed to check order status."
+                    )
+                }
+            }
+        }
+    }
+
     fun onPaymentFailed(reason: String) {
         _uiState.update {
             it.copy(
@@ -185,3 +228,4 @@ class SubscriptionViewModel(application: Application) : AndroidViewModel(applica
         _uiState.update { it.copy(errorMessage = null, successMessage = null) }
     }
 }
+

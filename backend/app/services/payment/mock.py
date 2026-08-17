@@ -48,6 +48,15 @@ class MockGateway(PaymentGateway):
             message="Mock payment verified successfully.",
         )
 
+    async def check_order_status(self, order_id: str) -> VerifyResult:
+        logger.info("[MOCK] Checked order status | order=%s", order_id)
+        return VerifyResult(
+            success=True,
+            payment_id=f"mock_pay_{uuid.uuid4().hex[:16]}",
+            order_id=order_id,
+            message="Mock order verified as paid.",
+        )
+
     def verify_webhook_signature(self, body: bytes, headers: dict) -> bool:
         secret = settings.MOCK_WEBHOOK_SECRET.encode()
         received = headers.get("x-mock-signature", "")
@@ -56,3 +65,4 @@ class MockGateway(PaymentGateway):
         if not valid:
             logger.warning("[MOCK] Webhook signature mismatch")
         return valid
+

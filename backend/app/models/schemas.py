@@ -132,6 +132,12 @@ class ConfirmPaymentIn(BaseModel):
     signature: Optional[str] = None      # HMAC signature (required for Razorpay)
 
 
+class CheckOrderIn(BaseModel):
+    """Request to verify the status of an order directly with the payment gateway."""
+    order_id: Optional[str] = Field(default=None, description="Gateway order ID. If omitted, latest pending order is checked.")
+
+
+
 class SubscriptionStatusOut(BaseModel):
     """Current subscription state and usage quota for the user."""
     has_subscription: bool

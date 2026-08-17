@@ -3,6 +3,7 @@ package com.englishtutor.app.ui.screens
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -37,8 +38,10 @@ fun SubscriptionScreen(
     onSelectPlan: (String) -> Unit,
     onSubscribe: (String) -> Unit,
     onNavigateToLogin: () -> Unit,
-    onOpenWebCheckout: () -> Unit = {}
+    onOpenWebCheckout: () -> Unit = {},
+    onCheckStatus: () -> Unit = {}
 ) {
+
     val scrollState = rememberScrollState()
 
     val bgBrush = Brush.verticalGradient(
@@ -213,13 +216,30 @@ fun SubscriptionScreen(
             Spacer(Modifier.height(16.dp))
         }
 
-        Spacer(Modifier.height(8.dp))
+        // ── Already Paid Check Button (for UPI QR) ──
+        OutlinedButton(
+            onClick = onCheckStatus,
+            enabled = !uiState.isProcessingPayment,
+            modifier = Modifier.fillMaxWidth().height(46.dp),
+            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.outlinedButtonColors(
+                contentColor = Color(0xFF5393FF)
+            ),
+            border = BorderStroke(1.dp, Color(0xFF2979FF).copy(alpha = 0.5f))
+        ) {
+            Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
+            Spacer(Modifier.width(8.dp))
+            Text("Already Paid via UPI? Check Status", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+        }
+
+        Spacer(Modifier.height(12.dp))
         Text(
             text = "🔒 Secured by Razorpay · UPI, Cards, NetBanking",
             color = Color.White.copy(alpha = 0.5f),
             fontSize = 11.sp,
             textAlign = TextAlign.Center
         )
+
     }
 }
 
