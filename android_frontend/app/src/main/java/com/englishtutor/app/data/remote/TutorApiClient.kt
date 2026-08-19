@@ -79,7 +79,7 @@ class TutorApiClient {
     /**
      * Step 2: Submit confirmed Hindi text to translate into English & generate audio
      */
-    suspend fun submitText(baseUrl: String, text: String): Result<TutorResponse> {
+    suspend fun submitText(baseUrl: String, text: String, token: String? = null): Result<TutorResponse> {
         return withContext(Dispatchers.IO) {
             try {
                 val cleanUrl = baseUrl.trimEnd('/')
@@ -92,10 +92,13 @@ class TutorApiClient {
                 val mediaType = "application/json; charset=utf-8".toMediaTypeOrNull()
                 val requestBody = jsonPayload.toRequestBody(mediaType)
 
-                val request = Request.Builder()
+                val requestBuilder = Request.Builder()
                     .url(endpoint)
                     .post(requestBody)
-                    .build()
+                if (!token.isNullOrBlank()) {
+                    requestBuilder.addHeader("Authorization", "Bearer $token")
+                }
+                val request = requestBuilder.build()
 
                 client.newCall(request).execute().use { response ->
                     if (!response.isSuccessful) {
@@ -180,7 +183,7 @@ class TutorApiClient {
     /**
      * Grammar Explainer — POST /grammar/explain
      */
-    suspend fun explainGrammar(baseUrl: String, topic: String): Result<GrammarResponse> {
+    suspend fun explainGrammar(baseUrl: String, topic: String, token: String? = null): Result<GrammarResponse> {
         return withContext(Dispatchers.IO) {
             try {
                 val cleanUrl = baseUrl.trimEnd('/')
@@ -193,17 +196,23 @@ class TutorApiClient {
                 val mediaType = "application/json; charset=utf-8".toMediaTypeOrNull()
                 val requestBody = jsonPayload.toRequestBody(mediaType)
 
-                val request = Request.Builder()
+                val requestBuilder = Request.Builder()
                     .url(endpoint)
                     .post(requestBody)
-                    .build()
+                if (!token.isNullOrBlank()) {
+                    requestBuilder.addHeader("Authorization", "Bearer $token")
+                }
+                val request = requestBuilder.build()
 
                 client.newCall(request).execute().use { response ->
                     if (!response.isSuccessful) {
                         val errorBody = response.body?.string() ?: ""
-                        return@withContext Result.failure(
-                            Exception("Grammar API error ${response.code}: $errorBody")
-                        )
+                        val friendly = when (response.code) {
+                            401 -> "Please sign in and subscribe to Monthly Pro to use Grammar Explorer."
+                            402 -> "Grammar Explorer is a Monthly Pro feature. Please subscribe to continue."
+                            else -> parseErrorMessage(errorBody, "Grammar API error ${response.code}: $errorBody")
+                        }
+                        return@withContext Result.failure(Exception(friendly))
                     }
                     val jsonString = response.body?.string()
                         ?: return@withContext Result.failure(Exception("Empty grammar response"))

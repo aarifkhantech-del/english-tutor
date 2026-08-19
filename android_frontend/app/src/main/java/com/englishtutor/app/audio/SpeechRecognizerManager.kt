@@ -3,11 +3,12 @@ package com.englishtutor.app.audio
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.util.Log
-import java.util.Locale
 
 class SpeechRecognizerManager(
     private val context: Context,
@@ -18,28 +19,49 @@ class SpeechRecognizerManager(
 ) {
 
     private var speechRecognizer: SpeechRecognizer? = null
+    private val mainHandler = Handler(Looper.getMainLooper())
+    private var sessionId = 0
+    private var startRetries = 0
+
     var isListening: Boolean = false
         private set
 
     fun startListening(languageLocale: String = "hi-IN") {
-        stopListening()
+        val newSession = ++sessionId
+        startRetries = 0
+        releaseRecognizer()
 
         if (!SpeechRecognizer.isRecognitionAvailable(context)) {
             onError("Android Speech Recognition is not available on this device.")
             return
         }
 
+        // Destroy the previous recognizer on this loop, then start on the next.
+        // Calling stopListening() on an already-finished session fires ERROR_CLIENT
+        // and made the first tap after a completed request appear to do nothing.
+        mainHandler.post {
+            if (newSession != sessionId) return@post
+            beginListening(languageLocale, newSession)
+        }
+    }
+
+    private fun beginListening(languageLocale: String, currentSession: Int) {
         try {
             val recognizer = SpeechRecognizer.createSpeechRecognizer(context)
             speechRecognizer = recognizer
 
             recognizer.setRecognitionListener(object : RecognitionListener {
+                private fun isCurrent(): Boolean =
+                    currentSession == sessionId && speechRecognizer === recognizer
+
                 override fun onReadyForSpeech(params: Bundle?) {
+                    if (!isCurrent()) return
                     Log.d("SpeechRecognizer", "Ready for speech")
                     isListening = true
                 }
 
                 override fun onBeginningOfSpeech() {
+                    if (!isCurrent()) return
                     Log.d("SpeechRecognizer", "Beginning of speech")
                 }
 
@@ -48,27 +70,50 @@ class SpeechRecognizerManager(
                 override fun onBufferReceived(buffer: ByteArray?) {}
 
                 override fun onEndOfSpeech() {
+                    if (!isCurrent()) return
                     Log.d("SpeechRecognizer", "End of speech")
                     isListening = false
                     onRecordingStopped()
                 }
 
                 override fun onError(error: Int) {
+                    if (!isCurrent()) return
                     isListening = false
+                    scheduleRelease(recognizer)
+
+                    // After a completed request the leftover engine often returns
+                    // ERROR_CLIENT or ERROR_RECOGNIZER_BUSY on the next start.
+                    val shouldRetry = (
+                        error == SpeechRecognizer.ERROR_CLIENT ||
+                            error == SpeechRecognizer.ERROR_RECOGNIZER_BUSY
+                        ) && startRetries < 1
+                    if (shouldRetry) {
+                        startRetries++
+                        Log.w("SpeechRecognizer", "Retrying listen after error $error")
+                        mainHandler.postDelayed({
+                            if (currentSession != sessionId) return@postDelayed
+                            beginListening(languageLocale, currentSession)
+                        }, 150)
+                        return
+                    }
+
                     val message = getErrorMessage(error)
                     Log.e("SpeechRecognizer", "Error code $error: $message")
                     onError(message)
                 }
 
                 override fun onResults(results: Bundle?) {
+                    if (!isCurrent()) return
                     isListening = false
                     val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                     val text = matches?.firstOrNull() ?: ""
                     Log.d("SpeechRecognizer", "Final result: $text")
                     onFinalResult(text)
+                    scheduleRelease(recognizer)
                 }
 
                 override fun onPartialResults(partialResults: Bundle?) {
+                    if (!isCurrent()) return
                     val matches = partialResults?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                     val text = matches?.firstOrNull() ?: ""
                     if (text.isNotBlank()) {
@@ -100,19 +145,43 @@ class SpeechRecognizerManager(
     }
 
     fun stopListening() {
-        try {
-            speechRecognizer?.stopListening()
-            speechRecognizer?.destroy()
-        } catch (e: Exception) {
-            Log.e("SpeechRecognizer", "Error destroying speech recognizer", e)
-        } finally {
-            speechRecognizer = null
+        val recognizer = speechRecognizer
+        if (recognizer != null && isListening) {
+            try {
+                recognizer.stopListening()
+            } catch (e: Exception) {
+                Log.e("SpeechRecognizer", "Error stopping speech recognizer", e)
+                sessionId++
+                releaseRecognizer()
+            }
             isListening = false
+        } else {
+            sessionId++
+            releaseRecognizer()
         }
     }
 
     fun release() {
-        stopListening()
+        sessionId++
+        mainHandler.removeCallbacksAndMessages(null)
+        releaseRecognizer()
+    }
+
+    private fun scheduleRelease(recognizer: SpeechRecognizer) {
+        mainHandler.post {
+            if (speechRecognizer === recognizer) releaseRecognizer()
+        }
+    }
+
+    private fun releaseRecognizer() {
+        val recognizer = speechRecognizer ?: return
+        speechRecognizer = null
+        isListening = false
+        try {
+            recognizer.destroy()
+        } catch (e: Exception) {
+            Log.e("SpeechRecognizer", "Error destroying speech recognizer", e)
+        }
     }
 
     private fun getErrorMessage(error: Int): String {

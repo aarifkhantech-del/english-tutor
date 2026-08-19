@@ -4,6 +4,7 @@ MongoDB Repositories for VocalBharat user, OTP, subscription, and payment entiti
 import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Tuple, List, Dict, Any
+from pymongo import ReturnDocument
 from app.core.config import settings
 from app.core.mongodb import get_mongo_db
 
@@ -51,6 +52,8 @@ def get_user_by_id(user_id: str) -> Optional[Dict[str, Any]]:
 
 def get_or_create_user(email: str) -> Tuple[Dict[str, Any], bool]:
     db = get_mongo_db()
+    if db is None:
+        raise RuntimeError("MongoDB is not configured or the client failed to initialize.")
     clean_email = email.lower().strip()
     existing = db.users.find_one({"email": clean_email})
     if existing:
@@ -68,21 +71,32 @@ def get_or_create_user(email: str) -> Tuple[Dict[str, Any], bool]:
     return user_doc, True
 
 
-def increment_user_request_count(user_id: str) -> int:
+def increment_user_request_count(user_id: Optional[str] = None, email: Optional[str] = None) -> int:
     """Atomically increment user's total request count and return updated count."""
     db = get_mongo_db()
     if db is None:
         return 0
-    res = db.users.find_one_and_update(
-        {"id": user_id},
-        {"$inc": {"request_count": 1}, "$set": {"updated_at": _now()}},
-        return_document=True
-    )
-    return res.get("request_count", 0) if res else 0
+    update = {"$inc": {"request_count": 1}, "$set": {"updated_at": _now()}}
+    res = None
+    if user_id:
+        res = db.users.find_one_and_update(
+            {"id": user_id},
+            update,
+            return_document=ReturnDocument.AFTER,
+        )
+    if res is None and email:
+        res = db.users.find_one_and_update(
+            {"email": email.lower().strip()},
+            update,
+            return_document=ReturnDocument.AFTER,
+        )
+    return int(res.get("request_count", 0)) if res else 0
 
 
-def get_user_request_count(user_id: str) -> int:
-    user = get_user_by_id(user_id)
+def get_user_request_count(user_id: Optional[str] = None, email: Optional[str] = None) -> int:
+    user = get_user_by_id(user_id) if user_id else None
+    if user is None and email:
+        user = get_user_by_email(email)
     return int(user.get("request_count", 0)) if user else 0
 
 

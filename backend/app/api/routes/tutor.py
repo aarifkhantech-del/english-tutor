@@ -5,7 +5,7 @@ from app.models.schemas import TutorResponse, TextTutorRequest
 from app.services.asr_service import asr_service
 from app.services.llm_service import llm_service
 from app.services.tts_service import tts_service
-from app.core.security import verify_usage_quota
+from app.core.security import verify_usage_quota, quota_payload
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["AI Tutor"])
@@ -41,6 +41,7 @@ async def tutor_interaction(
             transcription=transcription,
             correction=correction,
             audio_b64=audio_b64,
+            **quota_payload(_quota),
         )
     except HTTPException:
         raise
@@ -75,6 +76,7 @@ async def tutor_text_interaction(
             transcription=text,
             correction=correction,
             audio_b64=audio_b64,
+            **quota_payload(_quota),
         )
     except HTTPException:
         raise

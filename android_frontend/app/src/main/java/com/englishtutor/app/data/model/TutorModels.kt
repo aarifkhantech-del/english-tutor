@@ -30,7 +30,19 @@ data class TutorResponse(
     val correction: CorrectionResult = CorrectionResult(),
 
     @SerializedName("audio_b64")
-    val audioB64: String = ""
+    val audioB64: String = "",
+
+    @SerializedName("requests_used")
+    val requestsUsed: Int = 0,
+
+    @SerializedName("requests_limit")
+    val requestsLimit: Int = 8,
+
+    @SerializedName("requests_remaining")
+    val requestsRemaining: Int = 8,
+
+    @SerializedName("quota_exceeded")
+    val quotaExceeded: Boolean = false
 )
 
 data class HealthResponse(

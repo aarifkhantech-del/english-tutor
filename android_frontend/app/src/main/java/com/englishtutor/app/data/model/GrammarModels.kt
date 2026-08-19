@@ -17,5 +17,9 @@ data class GrammarResponse(
     @SerializedName("hindi_definition") val hindiDefinition: String,
     @SerializedName("examples") val examples: List<GrammarExample> = emptyList(),
     @SerializedName("tips") val tips: List<String> = emptyList(),
-    @SerializedName("difficulty") val difficulty: String = "Beginner"
+    @SerializedName("difficulty") val difficulty: String = "Beginner",
+    @SerializedName("requests_used") val requestsUsed: Int = 0,
+    @SerializedName("requests_limit") val requestsLimit: Int = 8,
+    @SerializedName("requests_remaining") val requestsRemaining: Int = 8,
+    @SerializedName("quota_exceeded") val quotaExceeded: Boolean = false
 )

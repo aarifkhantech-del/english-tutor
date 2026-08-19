@@ -19,8 +19,8 @@ import com.englishtutor.app.ui.theme.*
 @Composable
 fun CorrectionCard(
     correction: CorrectionResult,
-    isPlayingAudio: Boolean,
-    onPlayAudio: () -> Unit,
+    isPlayingAudio: Boolean = false,
+    onPlayAudio: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val targetText = correction.englishTranslation.ifBlank { correction.corrected }
@@ -53,22 +53,24 @@ fun CorrectionCard(
                     )
                 }
 
-                Button(
-                    onClick = onPlayAudio,
-                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
-                    shape = RoundedCornerShape(12.dp),
-                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
-                ) {
-                    Icon(
-                        imageVector = if (isPlayingAudio) Icons.Default.Pause else Icons.AutoMirrored.Filled.VolumeUp,
-                        contentDescription = "Listen",
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = if (isPlayingAudio) "Listening..." else "Listen",
-                        fontSize = 13.sp
-                    )
+                if (onPlayAudio != null) {
+                    Button(
+                        onClick = onPlayAudio,
+                        colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
+                        shape = RoundedCornerShape(12.dp),
+                        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
+                    ) {
+                        Icon(
+                            imageVector = if (isPlayingAudio) Icons.Default.Pause else Icons.AutoMirrored.Filled.VolumeUp,
+                            contentDescription = "Listen",
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = if (isPlayingAudio) "Listening..." else "Listen",
+                            fontSize = 13.sp
+                        )
+                    }
                 }
             }
 

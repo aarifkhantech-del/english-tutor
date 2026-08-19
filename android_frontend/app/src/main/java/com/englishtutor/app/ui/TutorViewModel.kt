@@ -6,13 +6,18 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.englishtutor.app.audio.AudioPlayerManager
 import com.englishtutor.app.audio.SpeechRecognizerManager
+import com.englishtutor.app.data.local.SessionManager
+import com.englishtutor.app.data.local.SpeakHistoryStore
+import com.englishtutor.app.data.model.SpeakHistoryEntry
 import com.englishtutor.app.data.model.TutorResponse
 import com.englishtutor.app.data.remote.TutorApiClient
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 data class TutorUiState(
     val isRecording: Boolean = false,
@@ -22,6 +27,7 @@ data class TutorUiState(
     val serverUrl: String = "http://192.168.1.8:8000",
     val pendingTranscription: String? = null,
     val result: TutorResponse? = null,
+    val speakHistory: List<SpeakHistoryEntry> = emptyList(),
     val errorMessage: String? = null,
     val showSettingsDialog: Boolean = false
 ) {
@@ -62,6 +68,8 @@ class TutorViewModel(application: Application) : AndroidViewModel(application) {
         }
     )
 
+    private val sessionManager = SessionManager.getInstance(application)
+    private val speakHistoryStore = SpeakHistoryStore.getInstance(application)
     private val prefs = application.getSharedPreferences("tutor_prefs", Context.MODE_PRIVATE)
 
     private val _uiState = MutableStateFlow(
@@ -72,6 +80,10 @@ class TutorViewModel(application: Application) : AndroidViewModel(application) {
     val uiState: StateFlow<TutorUiState> = _uiState.asStateFlow()
 
     init {
+        viewModelScope.launch {
+            val history = withContext(Dispatchers.IO) { speakHistoryStore.load() }
+            _uiState.update { it.copy(speakHistory = history) }
+        }
         checkServerHealth()
     }
 
@@ -92,9 +104,12 @@ class TutorViewModel(application: Application) : AndroidViewModel(application) {
             speechRecognizerManager.stopListening()
             _uiState.update { it.copy(isRecording = false) }
         } else {
+            // Free the mic if pronunciation audio is still playing from the last request.
+            playerManager.stop()
             _uiState.update {
                 it.copy(
                     isRecording = true,
+                    isPlayingAudio = false,
                     pendingTranscription = null,
                     result = null
                 )
@@ -112,15 +127,24 @@ class TutorViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             _uiState.update { it.copy(isTranslating = true, errorMessage = null) }
 
-            val result = apiClient.submitText(_uiState.value.serverUrl, text)
+            val result = apiClient.submitText(
+                _uiState.value.serverUrl,
+                text,
+                sessionManager.getAuthToken()
+            )
 
             result.fold(
                 onSuccess = { response ->
+                    sessionManager.recordConsumedRequest(response.requestsUsed)
+                    val history = withContext(Dispatchers.IO) {
+                        speakHistoryStore.addFromResponse(response)
+                    }
                     _uiState.update {
                         it.copy(
                             isTranslating = false,
                             pendingTranscription = null,
-                            result = response
+                            result = response,
+                            speakHistory = history
                         )
                     }
 
@@ -186,6 +210,20 @@ class TutorViewModel(application: Application) : AndroidViewModel(application) {
 
     fun closeSettings() {
         _uiState.update { it.copy(showSettingsDialog = false) }
+    }
+
+    fun deleteSpeakHistoryEntry(id: String) {
+        viewModelScope.launch {
+            val history = withContext(Dispatchers.IO) { speakHistoryStore.delete(id) }
+            _uiState.update { it.copy(speakHistory = history) }
+        }
+    }
+
+    fun clearSpeakHistory() {
+        viewModelScope.launch {
+            val history = withContext(Dispatchers.IO) { speakHistoryStore.clear() }
+            _uiState.update { it.copy(speakHistory = history) }
+        }
     }
 
     fun saveServerUrl(newUrl: String) {

@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlin.math.max
 
 class SessionManager(context: Context) {
 
@@ -15,6 +16,9 @@ class SessionManager(context: Context) {
 
     private val _userEmail = MutableStateFlow(getUserEmail())
     val userEmail: StateFlow<String?> = _userEmail.asStateFlow()
+
+    private val _requestCount = MutableStateFlow(prefs.getInt(KEY_REQUEST_COUNT, 0))
+    val requestCount: StateFlow<Int> = _requestCount.asStateFlow()
 
     fun saveAuthSession(token: String, email: String) {
         prefs.edit()
@@ -34,17 +38,27 @@ class SessionManager(context: Context) {
     }
 
     fun getLocalRequestCount(): Int {
-        return prefs.getInt(KEY_REQUEST_COUNT, 0)
+        return _requestCount.value
     }
 
     fun incrementLocalRequestCount(): Int {
-        val next = getLocalRequestCount() + 1
-        prefs.edit().putInt(KEY_REQUEST_COUNT, next).apply()
-        return next
+        return setLocalRequestCount(getLocalRequestCount() + 1)
+    }
+
+    fun recordConsumedRequest(serverUsed: Int = 0): Int {
+        val next = max(getLocalRequestCount() + 1, serverUsed)
+        return setLocalRequestCount(next)
+    }
+
+    fun setLocalRequestCount(count: Int): Int {
+        val safe = max(0, count)
+        prefs.edit().putInt(KEY_REQUEST_COUNT, safe).apply()
+        _requestCount.value = safe
+        return safe
     }
 
     fun resetLocalRequestCount() {
-        prefs.edit().putInt(KEY_REQUEST_COUNT, 0).apply()
+        setLocalRequestCount(0)
     }
 
     fun clearSession() {

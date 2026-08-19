@@ -32,11 +32,13 @@ import com.englishtutor.app.ui.theme.*
 @Composable
 fun GrammarScreen(
     uiState: GrammarUiState,
+    isPaid: Boolean,
     onTopicChange: (String) -> Unit,
     onExplain: () -> Unit,
     onStartVoice: () -> Unit,
     onStopVoice: () -> Unit,
-    onClear: () -> Unit
+    onClear: () -> Unit,
+    onUpgrade: () -> Unit
 ) {
     val scrollState = rememberScrollState()
 
@@ -59,9 +61,28 @@ fun GrammarScreen(
         ScreenHeader(
             title = "Grammar Explorer",
             subtitle = "Ask any English grammar topic & get clear Hindi explanations 📚",
-            gradientColors = listOf(AppAccent, AppAccentEnd)
+            gradientColors = listOf(AppAccent, AppAccentEnd),
+            extraContent = {
+                if (isPaid) {
+                    Row(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(100.dp))
+                            .background(Color.White.copy(alpha = 0.2f))
+                            .border(1.dp, Color.White.copy(alpha = 0.4f), RoundedCornerShape(100.dp))
+                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.Stars, null, tint = Color.White, modifier = Modifier.size(13.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text("Pro feature", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                    }
+                }
+            }
         )
 
+        if (!isPaid) {
+            GrammarPaywallCard(onUpgrade = onUpgrade)
+        } else {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -210,6 +231,62 @@ fun GrammarScreen(
         }
 
         Spacer(Modifier.height(20.dp))
+        }
+        }
+    }
+}
+
+@Composable
+private fun GrammarPaywallCard(onUpgrade: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 20.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(16.dp))
+                .background(SurfaceDark)
+                .border(1.dp, SurfaceBorder, RoundedCornerShape(16.dp))
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(64.dp)
+                    .clip(CircleShape)
+                    .background(Brush.linearGradient(listOf(AppAccent, AppAccentEnd))),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(Icons.Default.Lock, null, tint = Color.White, modifier = Modifier.size(28.dp))
+            }
+            Text(
+                "Grammar Explorer is a Pro feature",
+                color = TextPrimary,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
+            )
+            Text(
+                "Subscribe to Monthly Pro to ask any English grammar topic and get clear Hindi explanations, examples, and tips.",
+                color = TextSecondary,
+                fontSize = 14.sp,
+                lineHeight = 21.sp,
+                textAlign = TextAlign.Center
+            )
+            Button(
+                onClick = onUpgrade,
+                modifier = Modifier.fillMaxWidth().height(48.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = AppAccent)
+            ) {
+                Icon(Icons.Default.Stars, null, tint = Color.White, modifier = Modifier.size(16.dp))
+                Spacer(Modifier.width(6.dp))
+                Text("View Plans (₹120/mo)", color = Color.White, fontWeight = FontWeight.SemiBold)
+            }
         }
     }
 }

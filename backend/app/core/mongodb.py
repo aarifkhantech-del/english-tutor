@@ -9,8 +9,12 @@ Provides singleton database client and auto-initializes indexes for:
 """
 import logging
 from typing import Optional
+
+import certifi
 from pymongo import MongoClient, ASCENDING, DESCENDING
 from pymongo.database import Database
+from pymongo.errors import PyMongoError
+
 from app.core.config import settings
 
 logger = logging.getLogger("english_tutor.mongodb")
@@ -19,15 +23,23 @@ _client: Optional[MongoClient] = None
 _db: Optional[Database] = None
 
 
+def _client_kwargs() -> dict:
+    """TLS options that avoid common Atlas handshake failures on Windows/Python."""
+    return {
+        "serverSelectionTimeoutMS": 8000,
+        "connectTimeoutMS": 8000,
+        "socketTimeoutMS": 8000,
+        "tls": True,
+        "tlsCAFile": certifi.where(),
+        "tlsDisableOCSPEndpointCheck": True,
+    }
+
+
 def get_mongo_client() -> Optional[MongoClient]:
     global _client
     if _client is None and settings.use_mongodb:
         try:
-            _client = MongoClient(
-                settings.MONGODB_URI,
-                serverSelectionTimeoutMS=5000,
-                connectTimeoutMS=5000,
-            )
+            _client = MongoClient(settings.MONGODB_URI, **_client_kwargs())
         except Exception as exc:
             logger.error("Failed to initialize MongoClient: %s", exc)
             return None
@@ -55,11 +67,9 @@ def init_mongodb() -> bool:
             logger.warning("MongoDB client unavailable.")
             return False
 
-        # Ping server to verify credentials and connection
         db.command("ping")
         logger.info("Connected successfully to MongoDB Atlas database '%s'", settings.MONGODB_DB_NAME)
 
-        # Initialize collections and indexes
         db.users.create_index([("email", ASCENDING)], unique=True, background=True)
         db.otp_requests.create_index([("email", ASCENDING), ("created_at", DESCENDING)], background=True)
         db.otp_requests.create_index([("user_id", ASCENDING)], background=True)
@@ -71,6 +81,14 @@ def init_mongodb() -> bool:
 
         logger.info("MongoDB indexes verified for [users, otp_requests, subscriptions, payments].")
         return True
+    except PyMongoError as exc:
+        logger.error(
+            "MongoDB Atlas connection failed: %s. "
+            "If this is TLSV1_ALERT_INTERNAL_ERROR, whitelist this machine's public IP "
+            "in Atlas Network Access (or allow 0.0.0.0/0 for local development).",
+            exc,
+        )
+        return False
     except Exception as exc:
         logger.error("MongoDB Atlas connection failed: %s", exc)
         return False

@@ -16,6 +16,10 @@ class TutorResponse(BaseModel):
     transcription: str = Field(..., description="Transcribed student Hindi text")
     correction: CorrectionResult = Field(..., description="AI tutor correction and explanation")
     audio_b64: str = Field(default="", description="Base64-encoded in-memory MP3 audio pronunciation")
+    requests_used: int = 0
+    requests_limit: int = 8
+    requests_remaining: int = 8
+    quota_exceeded: bool = False
 
 
 class TextTutorRequest(BaseModel):
@@ -52,6 +56,10 @@ class GrammarResponse(BaseModel):
     examples: list[GrammarExample] = Field(default_factory=list, description="3 examples")
     tips: list[str] = Field(default_factory=list, description="2-3 practical tips")
     difficulty: str = Field(default="Beginner", description="Beginner / Intermediate / Advanced")
+    requests_used: int = 0
+    requests_limit: int = 8
+    requests_remaining: int = 8
+    quota_exceeded: bool = False
 
 
 # -- Auth / OTP Schemas --------------------------------------------------------

@@ -20,6 +20,7 @@ from fastapi import APIRouter, Body, Depends, HTTPException, Request, status
 from app.core.config import settings
 from app.core.mongodb import get_mongo_db
 from app.core.security import get_current_user, get_optional_user
+from app.services.mongo_repositories import get_user_request_count
 from app.models.schemas import (
     CheckOrderIn,
     ConfirmPaymentIn,
@@ -239,7 +240,7 @@ def _build_status(user) -> SubscriptionStatusOut:
     if db is not None:
         sub = db.subscriptions.find_one({"user_id": user.id, "status": {"$in": ["active", "pending"]}}, sort=[("created_at", -1)])
 
-    requests_used = int(getattr(user, "request_count", 0))
+    requests_used = get_user_request_count(getattr(user, "id", None), email=getattr(user, "email", None))
     requests_limit = settings.FREE_REQUESTS_LIMIT
     requests_remaining = max(0, requests_limit - requests_used)
 

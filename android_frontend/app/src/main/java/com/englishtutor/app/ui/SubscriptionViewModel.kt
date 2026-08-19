@@ -29,11 +29,31 @@ class SubscriptionViewModel(application: Application) : AndroidViewModel(applica
     private val sessionManager = SessionManager.getInstance(application)
     private val apiClient = TutorApiClient()
 
-    private val _uiState = MutableStateFlow(SubscriptionUiState())
+    private val _uiState = MutableStateFlow(
+        SubscriptionUiState(status = statusFromLocalCount(sessionManager.getLocalRequestCount()))
+    )
     val uiState: StateFlow<SubscriptionUiState> = _uiState.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            sessionManager.requestCount.collect { used ->
+                _uiState.update { state ->
+                    if (state.status.isActive) state
+                    else state.copy(status = mergeUsage(state.status, used))
+                }
+            }
+        }
+    }
 
     fun selectPlan(planId: String) {
         _uiState.update { it.copy(selectedPlanId = planId) }
+    }
+
+    fun refreshStatus(serverUrl: String) {
+        viewModelScope.launch {
+            val token = sessionManager.getAuthToken() ?: return@launch
+            apiClient.getSubscriptionStatus(serverUrl, token).onSuccess { applyStatus(it) }
+        }
     }
 
     fun loadPlansAndStatus(serverUrl: String) {
@@ -59,16 +79,41 @@ class SubscriptionViewModel(application: Application) : AndroidViewModel(applica
             val token = sessionManager.getAuthToken()
             if (token != null) {
                 val statusResult = apiClient.getSubscriptionStatus(serverUrl, token)
-                statusResult.onSuccess { subStatus ->
-                    _uiState.update { it.copy(status = subStatus) }
-                }.onFailure { err ->
+                statusResult.onSuccess { applyStatus(it) }.onFailure { err ->
                     _uiState.update { it.copy(errorMessage = err.message) }
                 }
             } else {
-                _uiState.update { it.copy(status = SubscriptionStatusOut()) }
+                applyStatus(statusFromLocalCount(sessionManager.getLocalRequestCount()))
             }
 
             _uiState.update { it.copy(isLoading = false) }
+        }
+    }
+
+    private fun applyStatus(subStatus: SubscriptionStatusOut) {
+        val localUsed = sessionManager.getLocalRequestCount()
+        val used = if (subStatus.isActive) subStatus.requestsUsed else maxOf(subStatus.requestsUsed, localUsed)
+        if (used != localUsed) {
+            sessionManager.setLocalRequestCount(used)
+        }
+        val merged = mergeUsage(subStatus, used)
+        _uiState.update { it.copy(status = merged) }
+    }
+
+    companion object {
+        private fun statusFromLocalCount(used: Int): SubscriptionStatusOut {
+            return mergeUsage(SubscriptionStatusOut(), used)
+        }
+
+        private fun mergeUsage(status: SubscriptionStatusOut, used: Int): SubscriptionStatusOut {
+            val limit = status.requestsLimit.takeIf { it > 0 } ?: 8
+            val safeUsed = if (status.isActive) status.requestsUsed else maxOf(used, status.requestsUsed)
+            return status.copy(
+                requestsUsed = safeUsed,
+                requestsLimit = limit,
+                requestsRemaining = maxOf(0, limit - safeUsed),
+                quotaExceeded = safeUsed >= limit && !status.isActive
+            )
         }
     }
 

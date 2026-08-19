@@ -16,6 +16,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from fastapi import HTTPException, status
+from pymongo.errors import PyMongoError
 
 from app.core.config import settings
 from app.core.mongodb import get_mongo_db
@@ -62,15 +63,31 @@ def _check_rate_limit(user_id: str) -> None:
         )
 
 
+def _raise_mongo_unavailable(exc: Exception) -> None:
+    logger.error("MongoDB unavailable during OTP flow: %s", exc)
+    raise HTTPException(
+        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        detail=(
+            "Login is temporarily unavailable because the database could not be reached. "
+            "Whitelist this machine's public IP in MongoDB Atlas Network Access, then retry."
+        ),
+    ) from exc
+
+
 async def request_otp(db: Any, email: str) -> None:
     """Create a new OTP for the user and send it via email."""
-    user_doc, _ = _get_or_create_user(email)
-    _check_rate_limit(user_doc["id"])
-    invalidate_pending_otps(user_doc["id"])
+    try:
+        user_doc, _ = _get_or_create_user(email)
+        _check_rate_limit(user_doc["id"])
+        invalidate_pending_otps(user_doc["id"])
 
-    plain_otp = str(secrets.randbelow(900000) + 100000)  # always 6 digits
-    expires_at = _now() + timedelta(minutes=settings.OTP_EXPIRY_MINUTES)
-    create_otp_record(user_doc["id"], email, _hash_otp(plain_otp), expires_at)
+        plain_otp = str(secrets.randbelow(900000) + 100000)  # always 6 digits
+        expires_at = _now() + timedelta(minutes=settings.OTP_EXPIRY_MINUTES)
+        create_otp_record(user_doc["id"], email, _hash_otp(plain_otp), expires_at)
+    except HTTPException:
+        raise
+    except (PyMongoError, RuntimeError) as exc:
+        _raise_mongo_unavailable(exc)
 
     logger.info("OTP generated for %s (expires at %s)", email, expires_at.isoformat())
     await send_otp_email(email, plain_otp)
@@ -80,6 +97,15 @@ def verify_otp(db: Any, email: str, plain_otp: str) -> tuple[dict[str, Any], boo
     """
     Verify the submitted OTP against MongoDB-backed records.
     """
+    try:
+        return _verify_otp(email, plain_otp)
+    except HTTPException:
+        raise
+    except (PyMongoError, RuntimeError) as exc:
+        _raise_mongo_unavailable(exc)
+
+
+def _verify_otp(email: str, plain_otp: str) -> tuple[dict[str, Any], bool]:
     user = get_user_by_email(email)
     if not user:
         raise HTTPException(

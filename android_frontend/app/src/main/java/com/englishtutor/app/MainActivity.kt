@@ -50,6 +50,7 @@ import com.englishtutor.app.ui.SubscriptionViewModel
 import com.englishtutor.app.ui.TutorViewModel
 import com.englishtutor.app.ui.FeedbackViewModel
 import com.englishtutor.app.ui.components.*
+import com.englishtutor.app.ui.screens.SpeakHistoryScreen
 import com.englishtutor.app.ui.screens.FeedbackScreen
 import com.englishtutor.app.ui.screens.HelpScreen
 import com.englishtutor.app.ui.screens.GrammarScreen
@@ -65,6 +66,7 @@ import org.json.JSONObject
 // ── Navigation Destinations ─────────────────────────────────────────────────
 sealed class Screen(val route: String, val label: String, val icon: ImageVector) {
     object Home         : Screen("home",         "Hindi to English", Icons.Default.Translate)
+    object History      : Screen("history",      "Speak History",    Icons.Default.History)
     object Grammar      : Screen("grammar",      "Grammar",          Icons.Default.School)
     object Subscription : Screen("subscription", "Plans & Pricing",  Icons.Default.Stars)
     object Login        : Screen("login",        "My Account",       Icons.Default.AccountCircle)
@@ -72,7 +74,7 @@ sealed class Screen(val route: String, val label: String, val icon: ImageVector)
     object Help         : Screen("help",         "Help & Support",   Icons.Default.SupportAgent)
 }
 
-private val screens = listOf(Screen.Home, Screen.Grammar, Screen.Subscription, Screen.Feedback, Screen.Help, Screen.Login)
+private val screens = listOf(Screen.Home, Screen.History, Screen.Grammar, Screen.Subscription, Screen.Feedback, Screen.Help, Screen.Login)
 
 class MainActivity : ComponentActivity(), PaymentResultWithDataListener {
 
@@ -245,6 +247,20 @@ fun AppShell(
         subscriptionViewModel.loadPlansAndStatus(tutorState.serverUrl)
     }
 
+    // Refresh remaining request count after a successful Hindi→English conversion
+    LaunchedEffect(tutorState.result) {
+        if (tutorState.result != null) {
+            subscriptionViewModel.refreshStatus(tutorState.serverUrl)
+        }
+    }
+
+    // Grammar explanations also consume quota
+    LaunchedEffect(grammarState.result) {
+        if (grammarState.result != null) {
+            subscriptionViewModel.refreshStatus(tutorState.serverUrl)
+        }
+    }
+
     val bgBrush = Brush.verticalGradient(
         colors = listOf(Color(0xFFEEF2FF), Color(0xFFF8FAFC), Color(0xFFF1F5F9))
     )
@@ -294,6 +310,7 @@ fun AppShell(
                             Text(
                                 text = when (currentRoute) {
                                      Screen.Grammar.route      -> "Grammar Explorer"
+                                     Screen.History.route      -> "Speak History"
                                      Screen.Subscription.route -> "Plans & Pricing"
                                      Screen.Login.route        -> "My Account"
                                      Screen.Feedback.route     -> "Feedback"
@@ -370,17 +387,27 @@ fun AppShell(
                             viewModel = tutorViewModel,
                             subState = subscriptionState,
                             onNavigateToSubscription = { navController.navigate(Screen.Subscription.route) },
+                            onNavigateToHistory = { navController.navigate(Screen.History.route) },
                             onRequestPermission = onRequestTutorMic
+                        )
+                    }
+                    composable(Screen.History.route) {
+                        SpeakHistoryScreen(
+                            entries = tutorState.speakHistory,
+                            onDelete = { tutorViewModel.deleteSpeakHistoryEntry(it) },
+                            onClearAll = { tutorViewModel.clearSpeakHistory() }
                         )
                     }
                     composable(Screen.Grammar.route) {
                         GrammarScreen(
                             uiState = grammarState,
+                            isPaid = subscriptionState.status.isActive,
                             onTopicChange = { grammarViewModel.setTopic(it) },
                             onExplain = { grammarViewModel.explainTopic(tutorState.serverUrl) },
                             onStartVoice = onRequestGrammarMic,
                             onStopVoice = { grammarViewModel.stopVoiceRecognition() },
-                            onClear = { grammarViewModel.clearResult() }
+                            onClear = { grammarViewModel.clearResult() },
+                            onUpgrade = { navController.navigate(Screen.Subscription.route) }
                         )
                     }
                     composable(Screen.Subscription.route) {
@@ -611,6 +638,7 @@ fun HomeScreenContent(
     viewModel: TutorViewModel,
     subState: com.englishtutor.app.ui.SubscriptionUiState,
     onNavigateToSubscription: () -> Unit,
+    onNavigateToHistory: () -> Unit,
     onRequestPermission: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -757,6 +785,47 @@ fun HomeScreenContent(
                             TranscriptionCard(text = response.transcription)
                             CorrectionCard(correction = response.correction, isPlayingAudio = uiState.isPlayingAudio, onPlayAudio = { viewModel.togglePlayAudio() })
                             PracticeCard(correction = response.correction)
+                        }
+                    }
+                }
+
+                val recentHistory = uiState.speakHistory.take(3)
+                if (recentHistory.isNotEmpty() && uiState.result == null && uiState.pendingTranscription == null) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                "Recent on this phone",
+                                color = TextPrimary,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier.weight(1f)
+                            )
+                            TextButton(onClick = onNavigateToHistory, contentPadding = PaddingValues(0.dp)) {
+                                Text("See all", color = AppAccent, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                            }
+                        }
+                        recentHistory.forEach { entry ->
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(SurfaceDark)
+                                    .border(1.dp, SurfaceBorder, RoundedCornerShape(12.dp))
+                                    .clickable(onClick = onNavigateToHistory)
+                                    .padding(12.dp)
+                            ) {
+                                Text(entry.hindi, color = TextPrimary, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                if (entry.english.isNotBlank()) {
+                                    Spacer(Modifier.height(4.dp))
+                                    Text(entry.english, color = TextSecondary, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                }
+                            }
                         }
                     }
                 }

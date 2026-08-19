@@ -2,10 +2,11 @@ import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
+from pymongo.errors import PyMongoError
 
 from app.core.config import settings
 from app.api.routes import (
@@ -98,6 +99,19 @@ def create_app() -> FastAPI:
         app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
     # Register API Routers
+    @app.exception_handler(PyMongoError)
+    async def mongodb_exception_handler(_request: Request, exc: PyMongoError):
+        logger.error("MongoDB error: %s", exc)
+        return JSONResponse(
+            status_code=503,
+            content={
+                "detail": (
+                    "Database is temporarily unavailable. "
+                    "Whitelist this machine's public IP in MongoDB Atlas Network Access."
+                )
+            },
+        )
+
     app.include_router(health_router)
     app.include_router(transcribe_router)
     app.include_router(tutor_router)

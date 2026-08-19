@@ -8,6 +8,7 @@ import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.englishtutor.app.data.local.SessionManager
 import com.englishtutor.app.data.model.GrammarResponse
 import com.englishtutor.app.data.remote.TutorApiClient
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,6 +31,7 @@ class GrammarViewModel(application: Application) : AndroidViewModel(application)
     val uiState: StateFlow<GrammarUiState> = _uiState.asStateFlow()
 
     private val apiClient = TutorApiClient()
+    private val sessionManager = SessionManager.getInstance(application)
     private var speechRecognizer: SpeechRecognizer? = null
 
     fun setTopic(topic: String) {
@@ -44,7 +46,7 @@ class GrammarViewModel(application: Application) : AndroidViewModel(application)
         }
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null, result = null) }
-            val result = apiClient.explainGrammar(serverUrl, topic)
+            val result = apiClient.explainGrammar(serverUrl, topic, sessionManager.getAuthToken())
             result.fold(
                 onSuccess = { response ->
                     _uiState.update { it.copy(isLoading = false, result = response) }
