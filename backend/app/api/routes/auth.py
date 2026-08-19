@@ -10,14 +10,64 @@ GET  /auth/me            — return the currently authenticated user's profile
 """
 import logging
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, HTTPException, status
+from google.auth.transport import requests as google_requests
+from google.oauth2 import id_token as google_id_token
 
+from app.core.config import settings
 from app.core.security import create_access_token, get_current_user
-from app.models.schemas import OTPRequestIn, OTPRequestOut, OTPVerifyIn, TokenOut, UserOut
+from app.models.schemas import (
+    GoogleSignInConfigOut,
+    GoogleSignInIn,
+    OTPRequestIn,
+    OTPRequestOut,
+    OTPVerifyIn,
+    TokenOut,
+    UserOut,
+)
 from app.services import otp_service
+from app.services.mongo_repositories import get_or_create_user
 
 logger = logging.getLogger("english_tutor.auth")
 router = APIRouter(prefix="/auth", tags=["Authentication"])
+
+
+@router.get("/google-config", response_model=GoogleSignInConfigOut, include_in_schema=False)
+async def google_sign_in_config():
+    """Expose only the public OAuth client ID required by Google Identity Services."""
+    return GoogleSignInConfigOut(
+        enabled=settings.google_sign_in_enabled,
+        client_id=settings.GOOGLE_OAUTH_CLIENT_IDS[0] if settings.google_sign_in_enabled else None,
+    )
+
+
+@router.post("/google", response_model=TokenOut, summary="Sign in with Google")
+async def sign_in_with_google(payload: GoogleSignInIn):
+    """Verify a Google ID token server-side and exchange it for a VocalBharat JWT."""
+    if not settings.google_sign_in_enabled:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Google Sign-In is not configured.")
+
+    try:
+        claims = google_id_token.verify_oauth2_token(payload.id_token, google_requests.Request())
+    except Exception:
+        logger.warning("Rejected invalid Google ID token")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid Google sign-in token.")
+
+    if claims.get("aud") not in settings.GOOGLE_OAUTH_CLIENT_IDS:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Google token was issued for a different client.")
+    if claims.get("iss") not in {"accounts.google.com", "https://accounts.google.com"}:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid Google token issuer.")
+    if not claims.get("email_verified") or not claims.get("email"):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Your Google account must have a verified email address.")
+
+    email = str(claims["email"]).lower().strip()
+    try:
+        _, is_new = get_or_create_user(email)
+    except RuntimeError as exc:
+        logger.error("Google Sign-In unavailable: %s", exc)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Authentication is temporarily unavailable.")
+
+    return TokenOut(access_token=create_access_token(email), email=email, is_new_user=is_new)
 
 
 @router.post(

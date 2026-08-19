@@ -51,6 +51,18 @@ class Settings:
     JWT_ALGORITHM: str = "HS256"
     JWT_EXPIRY_DAYS: int = int(os.getenv("JWT_EXPIRY_DAYS", "7"))
 
+    # Google Sign-In. Use the Web OAuth client ID here; Android requests its ID
+    # token for this audience and the API verifies it before issuing our JWT.
+    GOOGLE_OAUTH_CLIENT_IDS: list[str] = [
+        client_id.strip()
+        for client_id in os.getenv("GOOGLE_OAUTH_CLIENT_IDS", "").split(",")
+        if client_id.strip()
+    ]
+
+    @property
+    def google_sign_in_enabled(self) -> bool:
+        return bool(self.GOOGLE_OAUTH_CLIENT_IDS)
+
     # ── Email / SMTP ──────────────────────────────────────────────────────────
     # Leave SMTP_HOST empty → OTPs are printed to the terminal (dev mode)
     SMTP_HOST: str = os.getenv("SMTP_HOST", "")

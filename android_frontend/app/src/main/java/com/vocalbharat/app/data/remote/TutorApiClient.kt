@@ -1,6 +1,7 @@
 package com.vocalbharat.app.data.remote
 
 import com.vocalbharat.app.data.model.GrammarResponse
+import com.vocalbharat.app.data.model.GoogleSignInIn
 import com.vocalbharat.app.data.model.OTPRequestIn
 import com.vocalbharat.app.data.model.OTPRequestOut
 import com.vocalbharat.app.data.model.OTPVerifyIn
@@ -285,6 +286,25 @@ class TutorApiClient {
         }
     }
 
+    suspend fun signInWithGoogle(baseUrl: String, idToken: String): Result<TokenOut> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val cleanUrl = baseUrl.trimEnd('/')
+                val body = gson.toJson(GoogleSignInIn(idToken)).toRequestBody("application/json; charset=utf-8".toMediaTypeOrNull())
+                val request = Request.Builder().url("$cleanUrl/auth/google").post(body).build()
+                client.newCall(request).execute().use { response ->
+                    val jsonString = response.body?.string() ?: ""
+                    if (!response.isSuccessful) {
+                        return@withContext Result.failure(Exception(parseErrorMessage(jsonString, "Google sign-in failed (${response.code})")))
+                    }
+                    Result.success(gson.fromJson(jsonString, TokenOut::class.java))
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+    }
+
     suspend fun getMe(baseUrl: String, token: String): Result<UserOut> {
         return withContext(Dispatchers.IO) {
             try {
@@ -534,6 +554,4 @@ class TutorApiClient {
         }
     }
 }
-
-
 

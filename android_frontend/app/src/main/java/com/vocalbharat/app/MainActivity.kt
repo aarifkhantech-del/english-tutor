@@ -38,6 +38,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import androidx.credentials.CredentialManager
+import androidx.credentials.GetCredentialRequest
+import androidx.credentials.exceptions.GetCredentialException
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -60,6 +64,8 @@ import com.vocalbharat.app.ui.theme.*
 import com.razorpay.Checkout
 import com.razorpay.PaymentData
 import com.razorpay.PaymentResultWithDataListener
+import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 
@@ -128,7 +134,8 @@ class MainActivity : ComponentActivity(), PaymentResultWithDataListener {
                     onRequestGrammarMic = { checkGrammarPermission() },
                     onStartRazorpayPayment = { orderOut ->
                         startRazorpayPayment(orderOut, authViewModel.uiState.value.userEmail)
-                    }
+                    },
+                    onGoogleSignIn = { serverUrl, onSuccess -> launchGoogleSignIn(serverUrl, onSuccess) }
                 )
             }
         }
@@ -138,6 +145,35 @@ class MainActivity : ComponentActivity(), PaymentResultWithDataListener {
         super.onNewIntent(intent)
         setIntent(intent)
         pendingNavRoute = routeFromIntent(intent)
+    }
+
+    private fun launchGoogleSignIn(serverUrl: String, onSuccess: () -> Unit) {
+        if (BuildConfig.GOOGLE_WEB_CLIENT_ID.isBlank()) {
+            Toast.makeText(this, "Google Sign-In is not configured in this app build.", Toast.LENGTH_LONG).show()
+            return
+        }
+        lifecycleScope.launch {
+            try {
+                // This is the dedicated button flow: it shows every Google
+                // account on the device, including accounts new to the app.
+                val googleIdOption = GetSignInWithGoogleOption.Builder(
+                    BuildConfig.GOOGLE_WEB_CLIENT_ID
+                )
+                    .build()
+                val request = GetCredentialRequest.Builder().addCredentialOption(googleIdOption).build()
+                val result = CredentialManager.create(this@MainActivity).getCredential(this@MainActivity, request)
+                val credential = GoogleIdTokenCredential.createFrom(result.credential.data)
+                authViewModel.signInWithGoogle(serverUrl, credential.idToken, onSuccess)
+            } catch (error: GetCredentialException) {
+                Toast.makeText(
+                    this@MainActivity,
+                    error.message ?: "Google Sign-In could not start. Check the OAuth app configuration.",
+                    Toast.LENGTH_LONG
+                ).show()
+            } catch (_: Exception) {
+                Toast.makeText(this@MainActivity, "Could not complete Google Sign-In. Please try again.", Toast.LENGTH_LONG).show()
+            }
+        }
     }
 
     private fun routeFromIntent(intent: Intent?): String? {
@@ -259,7 +295,8 @@ fun AppShell(
     onDeepLinkConsumed: () -> Unit = {},
     onRequestTutorMic: () -> Unit,
     onRequestGrammarMic: () -> Unit,
-    onStartRazorpayPayment: (InitiatePaymentOut) -> Unit
+    onStartRazorpayPayment: (InitiatePaymentOut) -> Unit,
+    onGoogleSignIn: (String, () -> Unit) -> Unit
 ) {
     val navController = rememberNavController()
     val drawerState = rememberDrawerState(DrawerValue.Closed)
@@ -486,6 +523,12 @@ fun AppShell(
                     composable(Screen.Login.route) {
                         LoginScreen(
                             uiState = authState,
+                            onGoogleSignIn = {
+                                onGoogleSignIn(tutorState.serverUrl) {
+                                    subscriptionViewModel.loadPlansAndStatus(tutorState.serverUrl)
+                                    navController.navigate(Screen.Home.route)
+                                }
+                            },
                             onRequestOtp = { email -> authViewModel.requestOtp(tutorState.serverUrl, email) },
                             onVerifyOtp = { email, otp ->
                                 authViewModel.verifyOtp(tutorState.serverUrl, email, otp) {

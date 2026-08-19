@@ -36,6 +36,7 @@ import com.vocalbharat.app.ui.theme.*
 @Composable
 fun LoginScreen(
     uiState: AuthUiState,
+    onGoogleSignIn: () -> Unit,
     onRequestOtp: (String) -> Unit,
     onVerifyOtp: (String, String) -> Unit,
     onResetOtp: () -> Unit,
@@ -131,7 +132,7 @@ fun LoginScreen(
                     Text("Back to App", color = TextPrimary)
                 }
             } else if (!uiState.isOtpSent) {
-                // ── STEP 1: Enter Email ──
+                // ── Primary Google Sign-In, with OTP as a fallback ───────────
                 Text(
                     text = "Sign in to VocalBharat",
                     color = TextPrimary,
@@ -140,13 +141,34 @@ fun LoginScreen(
                 )
                 Spacer(Modifier.height(6.dp))
                 Text(
-                    text = "Enter your email. We'll send you a 6-digit OTP code.",
+                    text = "Use your Google account to sync your progress and Pro plan.",
                     color = TextSecondary,
                     fontSize = 13.sp,
                     textAlign = TextAlign.Center
                 )
 
                 Spacer(Modifier.height(20.dp))
+
+                Button(
+                    onClick = onGoogleSignIn,
+                    enabled = !uiState.isSigningInWithGoogle,
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.White),
+                    shape = RoundedCornerShape(12.dp),
+                    border = BorderStroke(1.dp, SurfaceBorder),
+                    modifier = Modifier.fillMaxWidth().height(50.dp)
+                ) {
+                    if (uiState.isSigningInWithGoogle) {
+                        CircularProgressIndicator(color = AppAccent, modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                    } else {
+                        Text("G", color = Color(0xFF4285F4), fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                        Spacer(Modifier.width(10.dp))
+                        Text("Continue with Google", color = Color(0xFF202124), fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+
+                Spacer(Modifier.height(20.dp))
+                Text("or use email OTP", color = TextMuted, fontSize = 12.sp)
+                Spacer(Modifier.height(12.dp))
 
                 OutlinedTextField(
                     value = emailInput,
@@ -187,7 +209,7 @@ fun LoginScreen(
                     if (uiState.isSendingOtp) {
                         CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
                     } else {
-                        Text("Send OTP →", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                        Text("Continue with Email OTP", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             } else {

@@ -75,7 +75,7 @@
       <ul>
         <li>the website and web tutor at <a href="https://english-tutor-6fx2.onrender.com/">english-tutor-6fx2.onrender.com</a></li>
         <li>the VocalBharat Android app (<code>com.vocalbharat.app</code>)</li>
-        <li>related services such as email OTP login, subscriptions, help, and feedback</li>
+        <li>related services such as Google Sign-In, optional email OTP login, subscriptions, help, and feedback</li>
       </ul>
       <p>
         We operate from India and primarily serve learners in India. If you use VocalBharat from
@@ -86,7 +86,8 @@
       <h2>2. Information we collect</h2>
       <h3>Account and login</h3>
       <ul>
-        <li><strong>Email address</strong> — used as your account identifier. There is no password; we send a one-time 6-digit OTP to your email.</li>
+        <li><strong>Google account email</strong> — used as your account identifier when you choose Google Sign-In. We receive only the verified email needed to create or access your account.</li>
+        <li><strong>Email address</strong> — if you choose the optional email login, we send a one-time 6-digit OTP. We do not store a password.</li>
         <li><strong>OTP records</strong> — we store a hashed OTP, expiry time, and attempt counts. We do not store the OTP in plain text.</li>
         <li><strong>Session token</strong> — after login, a JWT is stored in your browser (<code>localStorage</code>) or on the Android device so you stay signed in.</li>
         <li><strong>Usage counters</strong> — number of tutor/grammar requests, last login time, and account creation time, so we can enforce the free-tier quota and Pro plan.</li>
@@ -129,7 +130,7 @@
       <h2>3. How we use information</h2>
       <ul>
         <li>provide Hindi-to-English tutoring, pronunciation audio, and Grammar Explorer</li>
-        <li>authenticate you with email OTP and remember your Pro plan across devices</li>
+        <li>authenticate you with Google Sign-In or optional email OTP and remember your Pro plan across devices</li>
         <li>enforce free-tier limits and activate paid plans after successful payment</li>
         <li>answer support tickets and improve reliability (for example, fixing failed transcriptions)</li>
         <li>comply with law, prevent abuse, and protect the service</li>
@@ -139,14 +140,14 @@
       <h2>4. Permissions (Android)</h2>
       <ul>
         <li><strong>Microphone</strong> — required to practise speaking. You can refuse or later revoke it in Android Settings; speaking features will not work without it.</li>
-        <li><strong>Internet</strong> — required to reach the VocalBharat API, AI tutoring, OTP email, and payments.</li>
+        <li><strong>Internet</strong> — required to reach the VocalBharat API, Google Sign-In, AI tutoring, OTP email, and payments.</li>
       </ul>
 
       <h2>5. Third-party processors</h2>
       <p>We share only what is needed to run the product:</p>
       <ul>
         <li><strong>Mistral AI</strong> — receives the Hindi/English text of a practice or grammar request so the tutor can translate and explain. Audio files are not sent to Mistral; text is.</li>
-        <li><strong>Google (Android speech)</strong> — if you use the Android mic, the system speech recognizer may process audio according to Google’s and your device’s privacy settings.</li>
+        <li><strong>Google</strong> — Google Sign-In processes authentication according to Google’s policies. If you use the Android mic, the system speech recognizer may also process audio according to Google’s and your device’s privacy settings.</li>
         <li><strong>Razorpay</strong> — processes Pro payments and may collect billing information under Razorpay’s own privacy policy.</li>
         <li><strong>Email / SMTP provider</strong> — delivers OTPs and forwards help/feedback messages.</li>
         <li><strong>MongoDB Atlas</strong> — stores accounts, hashed OTPs, subscriptions, and payment metadata.</li>

@@ -3,6 +3,8 @@ plugins {
     id("org.jetbrains.kotlin.android")
 }
 
+val googleWebClientId = providers.gradleProperty("GOOGLE_WEB_CLIENT_ID").orElse("").get()
+
 android {
     namespace = "com.vocalbharat.app"
     compileSdk = 34
@@ -24,6 +26,7 @@ android {
             "API_BASE_URL",
             "\"https://english-tutor-6fx2.onrender.com\""
         )
+        buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"$googleWebClientId\"")
         manifestPlaceholders["usesCleartextTraffic"] = "false"
     }
 
@@ -99,6 +102,11 @@ dependencies {
 
     // Chrome Custom Tabs for Web Checkout
     implementation("androidx.browser:browser:1.8.0")
+
+    // Google Sign-In through Android Credential Manager
+    implementation("androidx.credentials:credentials:1.3.0")
+    implementation("androidx.credentials:credentials-play-services-auth:1.3.0")
+    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
 
 
     // Testing

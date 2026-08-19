@@ -52,6 +52,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // 2. Fetch payment config & Razorpay Key ID
   fetchPaymentConfig();
+  initializeGoogleSignIn();
 
   // 3. Check auth & subscription status
   if (state.token) {
@@ -544,7 +545,7 @@ function openAccountModal() {
   if (state.token) {
     showAuthStep("authStepProfile");
   } else {
-    showAuthStep("authStepEmail");
+    showAuthStep(document.getElementById("authStepGoogle") ? "authStepGoogle" : "authStepEmail");
   }
 }
 
@@ -554,11 +555,72 @@ function closeAccountModal() {
 
 function showAuthStep(stepId) {
   document.querySelectorAll(".auth-step").forEach(s => s.classList.remove("active"));
-  document.getElementById(stepId).classList.add("active");
+  const step = document.getElementById(stepId) || document.getElementById("authStepEmail");
+  if (step) step.classList.add("active");
 }
 
 function resetAuthModal() {
-  showAuthStep("authStepEmail");
+  showAuthStep(document.getElementById("authStepGoogle") ? "authStepGoogle" : "authStepEmail");
+}
+
+async function initializeGoogleSignIn() {
+  try {
+    const response = await fetch("/auth/google-config");
+    const config = await response.json();
+    if (!config.enabled || !config.client_id) {
+      // A missing server configuration must not strand existing OTP users.
+      document.getElementById("authStepGoogle").remove();
+      showAuthStep("authStepEmail");
+      return;
+    }
+
+    await new Promise((resolve, reject) => {
+      const script = document.createElement("script");
+      script.src = "https://accounts.google.com/gsi/client";
+      script.async = true;
+      script.defer = true;
+      script.onload = resolve;
+      script.onerror = reject;
+      document.head.appendChild(script);
+    });
+    google.accounts.id.initialize({ client_id: config.client_id, callback: handleGoogleCredential });
+    google.accounts.id.renderButton(document.getElementById("googleSignInButton"), {
+      theme: "outline", size: "large", text: "continue_with", width: 280,
+    });
+  } catch (_err) {
+    // Retain OTP when Google Identity Services cannot load (for example, offline).
+    document.getElementById("authStepGoogle").remove();
+    showAuthStep("authStepEmail");
+  }
+}
+
+async function handleGoogleCredential(googleResponse) {
+  try {
+    const res = await fetch("/auth/google", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id_token: googleResponse.credential }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: "Google sign-in failed" }));
+      showToast(err.detail || "Google sign-in failed", "error");
+      return;
+    }
+    await completeSignIn(await res.json());
+  } catch (_err) {
+    showToast("Network error during Google sign-in.", "error");
+  }
+}
+
+async function completeSignIn(data) {
+  state.token = data.access_token;
+  state.userEmail = data.email;
+  localStorage.setItem("vb_auth_token", data.access_token);
+  localStorage.setItem("vb_user_email", data.email);
+  showToast("Successfully signed in!", "success");
+  await loadUserProfile();
+  await loadSubscriptionStatus();
+  closeAccountModal();
 }
 
 let pendingAuthEmail = "";
@@ -628,16 +690,7 @@ async function verifyOtp() {
       return;
     }
 
-    const data = await res.json();
-    state.token = data.access_token;
-    state.userEmail = data.email;
-    localStorage.setItem("vb_auth_token", data.access_token);
-    localStorage.setItem("vb_user_email", data.email);
-
-    showToast("Successfully signed in!", "success");
-    await loadUserProfile();
-    await loadSubscriptionStatus();
-    closeAccountModal();
+    await completeSignIn(await res.json());
   } catch (err) {
     btn.innerHTML = `<span>Verify & Log In</span> <i class="fa-solid fa-arrow-right"></i>`;
     btn.disabled = false;
@@ -1381,4 +1434,3 @@ function toggleFaq(card) {
   // Open clicked (unless it was already open)
   if (!isOpen) card.classList.add("open");
 }
-

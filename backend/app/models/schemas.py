@@ -81,6 +81,16 @@ class OTPVerifyIn(BaseModel):
     otp: str = Field(..., min_length=6, max_length=6, description="6-digit OTP")
 
 
+class GoogleSignInIn(BaseModel):
+    """Google OpenID Connect ID token returned by the Google client SDK."""
+    id_token: str = Field(..., min_length=20)
+
+
+class GoogleSignInConfigOut(BaseModel):
+    enabled: bool
+    client_id: Optional[str] = None
+
+
 class TokenOut(BaseModel):
     """JWT access token returned after successful OTP verification."""
     access_token: str
@@ -167,4 +177,3 @@ class WebhookPayload(BaseModel):
     order_id: Optional[str] = None
     payment_id: Optional[str] = None
     status: Optional[str] = None
-

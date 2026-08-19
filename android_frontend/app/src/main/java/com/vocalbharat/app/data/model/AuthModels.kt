@@ -16,6 +16,10 @@ data class OTPVerifyIn(
     val otp: String
 )
 
+data class GoogleSignInIn(
+    @SerializedName("id_token") val idToken: String
+)
+
 data class TokenOut(
     @SerializedName("access_token") val accessToken: String,
     @SerializedName("token_type") val tokenType: String = "bearer",

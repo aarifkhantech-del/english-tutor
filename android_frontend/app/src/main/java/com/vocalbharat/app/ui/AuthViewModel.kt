@@ -20,6 +20,7 @@ data class AuthUiState(
     val userProfile: UserOut? = null,
     val isSendingOtp: Boolean = false,
     val isVerifyingOtp: Boolean = false,
+    val isSigningInWithGoogle: Boolean = false,
     val isOtpSent: Boolean = false,
     val resendCountdown: Int = 0,
     val errorMessage: String? = null,
@@ -109,6 +110,28 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                         isVerifyingOtp = false,
                         errorMessage = err.message ?: "Incorrect OTP. Please check and try again."
                     )
+                }
+            }
+        }
+    }
+
+    fun signInWithGoogle(serverUrl: String, idToken: String, onLoginSuccess: () -> Unit = {}) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isSigningInWithGoogle = true, errorMessage = null, successMessage = null) }
+            apiClient.signInWithGoogle(serverUrl, idToken).onSuccess { tokenOut ->
+                sessionManager.saveAuthSession(tokenOut.accessToken, tokenOut.email)
+                _uiState.update {
+                    it.copy(
+                        isSigningInWithGoogle = false,
+                        isLoggedIn = true,
+                        userEmail = tokenOut.email,
+                        successMessage = "Welcome to VocalBharat!"
+                    )
+                }
+                onLoginSuccess()
+            }.onFailure { err ->
+                _uiState.update {
+                    it.copy(isSigningInWithGoogle = false, errorMessage = err.message ?: "Google sign-in failed. Please try again.")
                 }
             }
         }
