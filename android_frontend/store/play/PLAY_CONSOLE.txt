@@ -34,7 +34,8 @@ Package: com.vocalbharat.app
 
 7. Contact & trust (required for ranking quality)
    Email, website: https://english-tutor-6fx2.onrender.com
-   Privacy policy URL must be public (Play rejects listings without it).
+   Privacy policy URL (paste in Play Console App content):
+   https://english-tutor-6fx2.onrender.com/privacy
 
 8. Countries / targeting
    Primary: India. Also enable Nepal, UAE, USA, UK, Canada, Singapore

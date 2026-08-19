@@ -15,6 +15,19 @@ async def test_root_endpoint():
 
 
 @pytest.mark.asyncio
+async def test_privacy_policy_page():
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        for path in ("/privacy", "/privacy-policy"):
+            response = await client.get(path)
+            assert response.status_code == 200
+            assert "text/html" in response.headers.get("content-type", "")
+            assert "Privacy Policy" in response.text
+            assert "VocalBharat" in response.text
+            assert "vocalbharat91@gmail.com" in response.text
+
+
+@pytest.mark.asyncio
 async def test_health_endpoint():
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:

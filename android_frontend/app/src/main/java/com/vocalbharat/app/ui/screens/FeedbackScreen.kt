@@ -20,8 +20,10 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.vocalbharat.app.AppConfig
 import com.vocalbharat.app.ui.FeedbackUiState
 import com.vocalbharat.app.ui.theme.*
 
@@ -270,6 +272,7 @@ fun HelpScreen(
     onDismissError: () -> Unit,
 ) {
     val scrollState = rememberScrollState()
+    val uriHandler = LocalUriHandler.current
 
     Column(
         modifier = Modifier
@@ -310,6 +313,10 @@ fun HelpScreen(
                 question = "How do I get a refund?",
                 answer = "Email vocalbharat91@gmail.com with your Razorpay payment ID within 7 days."
             )
+            Spacer(Modifier.height(8.dp))
+            TextButton(onClick = { uriHandler.openUri(AppConfig.PRIVACY_POLICY_URL) }) {
+                Text("Privacy Policy", color = AccentCyan, fontWeight = FontWeight.SemiBold)
+            }
         }
 
         HorizontalDivider(color = SurfaceBorder, thickness = 0.5.dp, modifier = Modifier.padding(horizontal = 20.dp))

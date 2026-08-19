@@ -49,6 +49,7 @@ async def root(request: Request):
         "version": settings.VERSION,
         "status": "online",
         "app": "/app",
+        "privacy": "/privacy",
         "docs": "/docs",
         "checkout": "/checkout",
     }
@@ -67,4 +68,14 @@ async def serve_webapp():
     if index_file.exists():
         return FileResponse(index_file)
     return {"message": "Web application index.html not found"}
+
+
+@router.get("/privacy", include_in_schema=False)
+@router.get("/privacy-policy", include_in_schema=False)
+async def serve_privacy_policy():
+    """Public privacy policy required for Play Console and the web app."""
+    policy = STATIC_DIR / "privacy-policy.html"
+    if policy.exists():
+        return FileResponse(policy, media_type="text/html")
+    return {"detail": "Privacy policy not found"}
 
