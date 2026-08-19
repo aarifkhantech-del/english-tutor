@@ -1,6 +1,7 @@
 package com.vocalbharat.app.data.model
 
 import com.google.gson.annotations.SerializedName
+import com.vocalbharat.app.BuildConfig
 
 data class FeedbackRequest(
     @SerializedName("name") val name: String,
@@ -8,7 +9,8 @@ data class FeedbackRequest(
     @SerializedName("rating") val rating: Int,
     @SerializedName("category") val category: String,
     @SerializedName("message") val message: String,
-    @SerializedName("page_source") val pageSource: String = "android"
+    @SerializedName("page_source") val pageSource: String = "android",
+    @SerializedName("app_version") val appVersion: String = BuildConfig.VERSION_NAME
 )
 
 data class HelpRequest(
@@ -18,7 +20,8 @@ data class HelpRequest(
     @SerializedName("subject") val subject: String,
     @SerializedName("description") val description: String,
     @SerializedName("device") val device: String = "android",
-    @SerializedName("page_source") val pageSource: String = "android"
+    @SerializedName("page_source") val pageSource: String = "android",
+    @SerializedName("app_version") val appVersion: String = BuildConfig.VERSION_NAME
 )
 
 data class FeedbackResponse(

@@ -1,3 +1,10 @@
 <resources>
     <string name="app_name">VocalBharat</string>
+    <string name="app_description">AI spoken English tutor for Hindi speakers. Speak Hindi, get English translation, pronunciation audio, and grammar help.</string>
+    <string name="shortcut_practice_short">Practice</string>
+    <string name="shortcut_practice_long">Speak Hindi to English</string>
+    <string name="shortcut_grammar_short">Grammar</string>
+    <string name="shortcut_grammar_long">English grammar in Hindi</string>
+    <string name="shortcut_history_short">History</string>
+    <string name="shortcut_history_long">Speak history</string>
 </resources>

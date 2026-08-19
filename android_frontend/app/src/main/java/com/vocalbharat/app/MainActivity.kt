@@ -78,6 +78,12 @@ private val screens = listOf(Screen.Home, Screen.History, Screen.Grammar, Screen
 
 class MainActivity : ComponentActivity(), PaymentResultWithDataListener {
 
+    companion object {
+        const val EXTRA_NAV_DESTINATION = "destination"
+    }
+
+    private var pendingNavRoute by mutableStateOf<String?>(null)
+
     private val tutorViewModel: TutorViewModel by viewModels()
     private val grammarViewModel: GrammarViewModel by viewModels()
     private val authViewModel: AuthViewModel by viewModels()
@@ -100,6 +106,7 @@ class MainActivity : ComponentActivity(), PaymentResultWithDataListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        pendingNavRoute = routeFromIntent(intent)
 
         // Preload Razorpay Checkout resources
         try {
@@ -115,6 +122,8 @@ class MainActivity : ComponentActivity(), PaymentResultWithDataListener {
                     authViewModel = authViewModel,
                     subscriptionViewModel = subscriptionViewModel,
                     feedbackViewModel = feedbackViewModel,
+                    deepLinkRoute = pendingNavRoute,
+                    onDeepLinkConsumed = { pendingNavRoute = null },
                     onRequestTutorMic = { checkAndRequestPermission() },
                     onRequestGrammarMic = { checkGrammarPermission() },
                     onStartRazorpayPayment = { orderOut ->
@@ -122,6 +131,27 @@ class MainActivity : ComponentActivity(), PaymentResultWithDataListener {
                     }
                 )
             }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        pendingNavRoute = routeFromIntent(intent)
+    }
+
+    private fun routeFromIntent(intent: Intent?): String? {
+        if (intent == null) return null
+        val extra = intent.getStringExtra(EXTRA_NAV_DESTINATION)
+        if (!extra.isNullOrBlank()) return extra
+        val host = intent.data?.host ?: return null
+        return when (host) {
+            "practice" -> Screen.Home.route
+            "grammar" -> Screen.Grammar.route
+            "history" -> Screen.History.route
+            "pricing", "subscription" -> Screen.Subscription.route
+            "help" -> Screen.Help.route
+            else -> null
         }
     }
 
@@ -225,6 +255,8 @@ fun AppShell(
     authViewModel: AuthViewModel,
     subscriptionViewModel: SubscriptionViewModel,
     feedbackViewModel: FeedbackViewModel,
+    deepLinkRoute: String? = null,
+    onDeepLinkConsumed: () -> Unit = {},
     onRequestTutorMic: () -> Unit,
     onRequestGrammarMic: () -> Unit,
     onStartRazorpayPayment: (InitiatePaymentOut) -> Unit
@@ -238,6 +270,15 @@ fun AppShell(
     val subscriptionState by subscriptionViewModel.uiState.collectAsState()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route ?: Screen.Home.route
+
+    LaunchedEffect(deepLinkRoute) {
+        val route = deepLinkRoute ?: return@LaunchedEffect
+        val allowed = screens.any { it.route == route }
+        if (allowed) {
+            navController.navigate(route) { launchSingleTop = true }
+            onDeepLinkConsumed()
+        }
+    }
 
     // Load user profile & subscription on start
     LaunchedEffect(tutorState.serverUrl, authState.isLoggedIn) {
@@ -362,13 +403,13 @@ fun AppShell(
                     }
                     Spacer(Modifier.width(8.dp))
 
-
-                    // Settings
-                    IconButton(
-                        onClick = { tutorViewModel.openSettings() },
-                        modifier = Modifier.size(38.dp).clip(CircleShape).background(Color(0xFFF1F5F9))
-                    ) {
-                        Icon(Icons.Default.Settings, "Settings", tint = Color(0xFF475569), modifier = Modifier.size(18.dp))
+                    if (AppConfig.allowServerOverride) {
+                        IconButton(
+                            onClick = { tutorViewModel.openSettings() },
+                            modifier = Modifier.size(38.dp).clip(CircleShape).background(Color(0xFFF1F5F9))
+                        ) {
+                            Icon(Icons.Default.Settings, "Settings", tint = Color(0xFF475569), modifier = Modifier.size(18.dp))
+                        }
                     }
                 }
 
@@ -497,8 +538,7 @@ fun AppShell(
                 }
             }
 
-            // Settings dialog
-            if (tutorState.showSettingsDialog) {
+            if (AppConfig.allowServerOverride && tutorState.showSettingsDialog) {
                 ServerConfigDialog(
                     currentUrl = tutorState.serverUrl,
                     onDismiss = { tutorViewModel.closeSettings() },
@@ -623,7 +663,7 @@ fun AppDrawer(
         HorizontalDivider(color = Color(0xFFE2E8F0))
         Spacer(Modifier.height(8.dp))
         Text(
-            "VocalBharat v1.0",
+            "VocalBharat v${BuildConfig.VERSION_NAME}",
             color = Color(0xFF94A3B8),
             fontSize = 11.sp,
             modifier = Modifier.padding(start = 20.dp, bottom = 16.dp)
@@ -747,9 +787,16 @@ fun HomeScreenContent(
                 if (!uiState.isServerOnline && !uiState.isRecording && !uiState.isProcessing) {
                     GlassBanner(
                         icon = { Icon(Icons.Default.WarningAmber, null, tint = RecordingRed, modifier = Modifier.size(16.dp)) },
-                        text = "Backend offline. Tap Settings to configure.",
+                        text = if (AppConfig.allowServerOverride)
+                            "Backend offline. Tap Settings to configure."
+                        else
+                            "Can't reach VocalBharat servers. Check your internet and try again.",
                         tint = RecordingRed,
-                        action = { TextButton(onClick = { viewModel.openSettings() }) { Text("Fix", fontSize = 11.sp, color = AppAccent) } }
+                        action = if (AppConfig.allowServerOverride) {
+                            { TextButton(onClick = { viewModel.openSettings() }) { Text("Fix", fontSize = 11.sp, color = AppAccent) } }
+                        } else {
+                            null
+                        }
                     )
                 }
                 uiState.errorMessage?.let { error ->

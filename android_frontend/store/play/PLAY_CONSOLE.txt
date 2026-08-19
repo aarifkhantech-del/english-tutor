@@ -1,0 +1,54 @@
+VocalBharat Play Console — ASO paste sheet
+Package: com.vocalbharat.app
+
+1. Default language: English (India)  [en-IN]
+   Add store listing: Hindi (India)   [hi-IN]
+
+2. App name (30 chars) — paste from en-IN/title.txt and hi-IN/title.txt
+   Keep the brand first. Google Play indexes title + short + long description.
+
+3. Short description (80 chars) — first line users see under the title.
+   Put Hindi→English and spoken English in the first 80 characters.
+
+4. Full description — paste en-IN and hi-IN full_description.txt.
+   Do not stuff unrelated keywords. Repeat 2–3 primary phrases naturally:
+   spoken English, Hindi to English, English pronunciation, English grammar.
+
+5. Category
+   Application type: App
+   Category: Education
+   Tags (pick up to 5): Language learning, Education, Spoken English, Hindi, AI
+
+6. Graphics (ranking + conversion)
+   Icon: 512×512 PNG, no Play badge, readable at small size (VB mark is fine)
+   Feature graphic: 1024×500 — headline “Speak Hindi, Learn English”
+   Phone screenshots (min 2, aim 6–8):
+     1. Mic + Hindi speech
+     2. English translation + audio
+     3. Grammar in Hindi
+     4. Grammar Explorer
+     5. Speak History
+     6. Plans
+   Caption each screenshot with a benefit, not a UI label.
+   Optional: 30–120s YouTube promo, first 5s = Hindi speaker using the mic.
+
+7. Contact & trust (required for ranking quality)
+   Email, website: https://english-tutor-6fx2.onrender.com
+   Privacy policy URL must be public (Play rejects listings without it).
+
+8. Countries / targeting
+   Primary: India. Also enable Nepal, UAE, USA, UK, Canada, Singapore
+   if you serve Hindi speakers there.
+
+9. Custom store listing (India)
+   Create a listing experiment for India with the Hindi copy if default is English.
+
+10. After publish
+    Reply to reviews in Hindi and English within 48h.
+    Ship notes that mention a user-visible benefit (not only “bug fixes”).
+    Do not buy installs or fake reviews — Play penalizes this.
+
+Primary search phrases to rank for
+  spoken english, spoken english app, hindi to english, english speaking,
+  english pronunciation, english grammar in hindi, learn english speaking,
+  ai english tutor, spoken english for beginners

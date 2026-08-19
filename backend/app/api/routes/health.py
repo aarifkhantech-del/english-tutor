@@ -9,6 +9,22 @@ router = APIRouter(tags=["System"])
 STATIC_DIR = Path(__file__).resolve().parent.parent.parent / "static"
 
 
+@router.get("/robots.txt", include_in_schema=False)
+async def robots_txt():
+    robots = STATIC_DIR / "robots.txt"
+    if robots.exists():
+        return FileResponse(robots, media_type="text/plain")
+    return {"detail": "not found"}
+
+
+@router.get("/sitemap.xml", include_in_schema=False)
+async def sitemap_xml():
+    sitemap = STATIC_DIR / "sitemap.xml"
+    if sitemap.exists():
+        return FileResponse(sitemap, media_type="application/xml")
+    return {"detail": "not found"}
+
+
 @router.get("/health", response_model=HealthResponse)
 async def health_check() -> HealthResponse:
     """System health check and component status."""

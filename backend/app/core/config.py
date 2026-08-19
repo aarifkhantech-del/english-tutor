@@ -12,7 +12,7 @@ load_dotenv(BASE_DIR / ".env")
 class Settings:
     PROJECT_NAME: str = "VocalBharat - Spoken English Tutor"
     VERSION: str = "2.1.0"
-    DESCRIPTION: str = "High-performance AI Spoken English tutor for Hindi speakers"
+    DESCRIPTION: str = "AI spoken English tutor for Hindi speakers: Hindi-to-English practice, pronunciation, and grammar."
 
     # Mistral AI configuration
     MISTRAL_API_KEY: str = os.getenv("MISTRAL_API_KEY", "")

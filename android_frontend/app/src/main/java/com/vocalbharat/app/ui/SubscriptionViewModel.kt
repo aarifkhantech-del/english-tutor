@@ -3,6 +3,7 @@ package com.vocalbharat.app.ui
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.vocalbharat.app.AppConfig
 import com.vocalbharat.app.data.local.SessionManager
 import com.vocalbharat.app.data.model.InitiatePaymentOut
 import com.vocalbharat.app.data.model.PlanInfo
@@ -136,8 +137,8 @@ class SubscriptionViewModel(application: Application) : AndroidViewModel(applica
             // 1. Initiate payment order
             val initiateResult = apiClient.initiatePayment(serverUrl, token, planId)
             initiateResult.onSuccess { orderOut ->
-                if (orderOut.gateway == "mock") {
-                    // Simulated mock payment: complete instantly
+                if (AppConfig.allowServerOverride && orderOut.gateway == "mock") {
+                    // Debug-only simulated payment. Release builds always use Razorpay.
                     val confirmResult = apiClient.confirmPayment(
                         baseUrl = serverUrl,
                         token = token,
@@ -161,8 +162,14 @@ class SubscriptionViewModel(application: Application) : AndroidViewModel(applica
                             )
                         }
                     }
+                } else if (orderOut.gateway == "mock") {
+                    _uiState.update {
+                        it.copy(
+                            isProcessingPayment = false,
+                            errorMessage = "Payments are not available right now. Please try again later."
+                        )
+                    }
                 } else {
-                    // For Razorpay / other real gateways: trigger Checkout sheet
                     _uiState.update { it.copy(isProcessingPayment = false) }
                     onLaunchRazorpay(orderOut)
                 }

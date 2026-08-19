@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutId="practice"
+        android:shortcutLongLabel="@string/shortcut_practice_long"
+        android:shortcutShortLabel="@string/shortcut_practice_short">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="vocalbharat://practice"
+            android:targetClass="com.vocalbharat.app.MainActivity"
+            android:targetPackage="com.vocalbharat.app" />
+    </shortcut>
+    <shortcut
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutId="grammar"
+        android:shortcutLongLabel="@string/shortcut_grammar_long"
+        android:shortcutShortLabel="@string/shortcut_grammar_short">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="vocalbharat://grammar"
+            android:targetClass="com.vocalbharat.app.MainActivity"
+            android:targetPackage="com.vocalbharat.app" />
+    </shortcut>
+    <shortcut
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutId="history"
+        android:shortcutLongLabel="@string/shortcut_history_long"
+        android:shortcutShortLabel="@string/shortcut_history_short">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="vocalbharat://history"
+            android:targetClass="com.vocalbharat.app.MainActivity"
+            android:targetPackage="com.vocalbharat.app" />
+    </shortcut>
+</shortcuts>

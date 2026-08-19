@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">VocalBharat</string>
+    <string name="app_description">हिंदी बोलने वालों के लिए AI स्पोकन इंग्लिश ट्यूटर। हिंदी बोलें, अंग्रेज़ी अनुवाद, उच्चारण और व्याकरण सीखें।</string>
+    <string name="shortcut_practice_short">अभ्यास</string>
+    <string name="shortcut_practice_long">हिंदी से अंग्रेज़ी बोलें</string>
+    <string name="shortcut_grammar_short">व्याकरण</string>
+    <string name="shortcut_grammar_long">अंग्रेज़ी व्याकरण हिंदी में</string>
+    <string name="shortcut_history_short">इतिहास</string>
+    <string name="shortcut_history_long">बोलने का इतिहास</string>
+</resources>

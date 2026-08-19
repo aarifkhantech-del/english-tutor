@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.vocalbharat.app.AppConfig
 import com.vocalbharat.app.audio.AudioPlayerManager
 import com.vocalbharat.app.audio.SpeechRecognizerManager
 import com.vocalbharat.app.data.local.SessionManager
@@ -24,7 +25,7 @@ data class TutorUiState(
     val isTranslating: Boolean = false,
     val isPlayingAudio: Boolean = false,
     val isServerOnline: Boolean = true,
-    val serverUrl: String = "http://192.168.1.8:8000",
+    val serverUrl: String = AppConfig.PRODUCTION_API_URL,
     val pendingTranscription: String? = null,
     val result: TutorResponse? = null,
     val speakHistory: List<SpeakHistoryEntry> = emptyList(),
@@ -73,9 +74,7 @@ class TutorViewModel(application: Application) : AndroidViewModel(application) {
     private val prefs = application.getSharedPreferences("tutor_prefs", Context.MODE_PRIVATE)
 
     private val _uiState = MutableStateFlow(
-        TutorUiState(
-            serverUrl = prefs.getString("server_url", "http://10.0.2.2:8000") ?: "http://10.0.2.2:8000"
-        )
+        TutorUiState(serverUrl = resolveServerUrl())
     )
     val uiState: StateFlow<TutorUiState> = _uiState.asStateFlow()
 
@@ -205,6 +204,7 @@ class TutorViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun openSettings() {
+        if (!AppConfig.allowServerOverride) return
         _uiState.update { it.copy(showSettingsDialog = true) }
     }
 
@@ -227,10 +227,21 @@ class TutorViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun saveServerUrl(newUrl: String) {
+        if (!AppConfig.allowServerOverride) {
+            _uiState.update { it.copy(showSettingsDialog = false) }
+            return
+        }
         val cleanUrl = newUrl.trim().trimEnd('/')
         prefs.edit().putString("server_url", cleanUrl).apply()
         _uiState.update { it.copy(serverUrl = cleanUrl, showSettingsDialog = false) }
         checkServerHealth()
+    }
+
+    private fun resolveServerUrl(): String {
+        if (!AppConfig.allowServerOverride) {
+            return AppConfig.apiBaseUrl
+        }
+        return prefs.getString("server_url", AppConfig.apiBaseUrl) ?: AppConfig.apiBaseUrl
     }
 
     override fun onCleared() {

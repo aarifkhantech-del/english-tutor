@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /docs
+Disallow: /redoc
+Disallow: /openapi.json
+
+Sitemap: https://english-tutor-6fx2.onrender.com/sitemap.xml
