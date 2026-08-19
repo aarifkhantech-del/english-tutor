@@ -1,10 +1,10 @@
-package com.englishtutor.app.ui
+package com.vocalbharat.app.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.englishtutor.app.data.model.FeedbackRequest
-import com.englishtutor.app.data.model.HelpRequest
-import com.englishtutor.app.data.remote.TutorApiClient
+import com.vocalbharat.app.data.model.FeedbackRequest
+import com.vocalbharat.app.data.model.HelpRequest
+import com.vocalbharat.app.data.remote.TutorApiClient
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

@@ -1,17 +1,17 @@
-package com.englishtutor.app.data.remote
+package com.vocalbharat.app.data.remote
 
-import com.englishtutor.app.data.model.GrammarResponse
-import com.englishtutor.app.data.model.OTPRequestIn
-import com.englishtutor.app.data.model.OTPRequestOut
-import com.englishtutor.app.data.model.OTPVerifyIn
-import com.englishtutor.app.data.model.TokenOut
-import com.englishtutor.app.data.model.UserOut
-import com.englishtutor.app.data.model.PlansOut
-import com.englishtutor.app.data.model.InitiatePaymentIn
-import com.englishtutor.app.data.model.InitiatePaymentOut
-import com.englishtutor.app.data.model.ConfirmPaymentIn
-import com.englishtutor.app.data.model.SubscriptionStatusOut
-import com.englishtutor.app.data.model.TutorResponse
+import com.vocalbharat.app.data.model.GrammarResponse
+import com.vocalbharat.app.data.model.OTPRequestIn
+import com.vocalbharat.app.data.model.OTPRequestOut
+import com.vocalbharat.app.data.model.OTPVerifyIn
+import com.vocalbharat.app.data.model.TokenOut
+import com.vocalbharat.app.data.model.UserOut
+import com.vocalbharat.app.data.model.PlansOut
+import com.vocalbharat.app.data.model.InitiatePaymentIn
+import com.vocalbharat.app.data.model.InitiatePaymentOut
+import com.vocalbharat.app.data.model.ConfirmPaymentIn
+import com.vocalbharat.app.data.model.SubscriptionStatusOut
+import com.vocalbharat.app.data.model.TutorResponse
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import kotlinx.coroutines.Dispatchers
@@ -481,8 +481,8 @@ class TutorApiClient {
      */
     suspend fun submitFeedback(
         baseUrl: String,
-        payload: com.englishtutor.app.data.model.FeedbackRequest
-    ): Result<com.englishtutor.app.data.model.FeedbackResponse> {
+        payload: com.vocalbharat.app.data.model.FeedbackRequest
+    ): Result<com.vocalbharat.app.data.model.FeedbackResponse> {
         return withContext(Dispatchers.IO) {
             try {
                 val cleanUrl = baseUrl.trimEnd('/')
@@ -493,7 +493,7 @@ class TutorApiClient {
                 client.newCall(request).execute().use { response ->
                     val body = response.body?.string() ?: ""
                     if (response.isSuccessful) {
-                        val result = gson.fromJson(body, com.englishtutor.app.data.model.FeedbackResponse::class.java)
+                        val result = gson.fromJson(body, com.vocalbharat.app.data.model.FeedbackResponse::class.java)
                         Result.success(result)
                     } else {
                         Result.failure(Exception(parseErrorMessage(body, "Feedback submission failed")))
@@ -510,8 +510,8 @@ class TutorApiClient {
      */
     suspend fun submitHelp(
         baseUrl: String,
-        payload: com.englishtutor.app.data.model.HelpRequest
-    ): Result<com.englishtutor.app.data.model.FeedbackResponse> {
+        payload: com.vocalbharat.app.data.model.HelpRequest
+    ): Result<com.vocalbharat.app.data.model.FeedbackResponse> {
         return withContext(Dispatchers.IO) {
             try {
                 val cleanUrl = baseUrl.trimEnd('/')
@@ -522,7 +522,7 @@ class TutorApiClient {
                 client.newCall(request).execute().use { response ->
                     val body = response.body?.string() ?: ""
                     if (response.isSuccessful) {
-                        val result = gson.fromJson(body, com.englishtutor.app.data.model.FeedbackResponse::class.java)
+                        val result = gson.fromJson(body, com.vocalbharat.app.data.model.FeedbackResponse::class.java)
                         Result.success(result)
                     } else {
                         Result.failure(Exception(parseErrorMessage(body, "Help request failed")))

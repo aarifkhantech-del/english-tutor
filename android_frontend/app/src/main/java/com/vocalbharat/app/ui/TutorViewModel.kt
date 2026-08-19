@@ -1,16 +1,16 @@
-package com.englishtutor.app.ui
+package com.vocalbharat.app.ui
 
 import android.app.Application
 import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.englishtutor.app.audio.AudioPlayerManager
-import com.englishtutor.app.audio.SpeechRecognizerManager
-import com.englishtutor.app.data.local.SessionManager
-import com.englishtutor.app.data.local.SpeakHistoryStore
-import com.englishtutor.app.data.model.SpeakHistoryEntry
-import com.englishtutor.app.data.model.TutorResponse
-import com.englishtutor.app.data.remote.TutorApiClient
+import com.vocalbharat.app.audio.AudioPlayerManager
+import com.vocalbharat.app.audio.SpeechRecognizerManager
+import com.vocalbharat.app.data.local.SessionManager
+import com.vocalbharat.app.data.local.SpeakHistoryStore
+import com.vocalbharat.app.data.model.SpeakHistoryEntry
+import com.vocalbharat.app.data.model.TutorResponse
+import com.vocalbharat.app.data.remote.TutorApiClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

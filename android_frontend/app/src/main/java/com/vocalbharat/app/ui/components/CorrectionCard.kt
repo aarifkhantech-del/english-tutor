@@ -1,4 +1,4 @@
-package com.englishtutor.app.ui.components
+package com.vocalbharat.app.ui.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
@@ -13,8 +13,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.englishtutor.app.data.model.CorrectionResult
-import com.englishtutor.app.ui.theme.*
+import com.vocalbharat.app.data.model.CorrectionResult
+import com.vocalbharat.app.ui.theme.*
 
 @Composable
 fun CorrectionCard(

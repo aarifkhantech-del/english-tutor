@@ -1,4 +1,4 @@
-package com.englishtutor.app
+package com.vocalbharat.app
 
 import android.Manifest
 import android.content.Intent
@@ -43,20 +43,20 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.englishtutor.app.data.model.InitiatePaymentOut
-import com.englishtutor.app.ui.AuthViewModel
-import com.englishtutor.app.ui.GrammarViewModel
-import com.englishtutor.app.ui.SubscriptionViewModel
-import com.englishtutor.app.ui.TutorViewModel
-import com.englishtutor.app.ui.FeedbackViewModel
-import com.englishtutor.app.ui.components.*
-import com.englishtutor.app.ui.screens.SpeakHistoryScreen
-import com.englishtutor.app.ui.screens.FeedbackScreen
-import com.englishtutor.app.ui.screens.HelpScreen
-import com.englishtutor.app.ui.screens.GrammarScreen
-import com.englishtutor.app.ui.screens.LoginScreen
-import com.englishtutor.app.ui.screens.SubscriptionScreen
-import com.englishtutor.app.ui.theme.*
+import com.vocalbharat.app.data.model.InitiatePaymentOut
+import com.vocalbharat.app.ui.AuthViewModel
+import com.vocalbharat.app.ui.GrammarViewModel
+import com.vocalbharat.app.ui.SubscriptionViewModel
+import com.vocalbharat.app.ui.TutorViewModel
+import com.vocalbharat.app.ui.FeedbackViewModel
+import com.vocalbharat.app.ui.components.*
+import com.vocalbharat.app.ui.screens.SpeakHistoryScreen
+import com.vocalbharat.app.ui.screens.FeedbackScreen
+import com.vocalbharat.app.ui.screens.HelpScreen
+import com.vocalbharat.app.ui.screens.GrammarScreen
+import com.vocalbharat.app.ui.screens.LoginScreen
+import com.vocalbharat.app.ui.screens.SubscriptionScreen
+import com.vocalbharat.app.ui.theme.*
 import com.razorpay.Checkout
 import com.razorpay.PaymentData
 import com.razorpay.PaymentResultWithDataListener
@@ -108,7 +108,7 @@ class MainActivity : ComponentActivity(), PaymentResultWithDataListener {
         }
 
         setContent {
-            EnglishTutorTheme {
+            VocalBharatTheme {
                 AppShell(
                     tutorViewModel = tutorViewModel,
                     grammarViewModel = grammarViewModel,
@@ -513,8 +513,8 @@ fun AppShell(
 @Composable
 fun AppDrawer(
     currentRoute: String,
-    authState: com.englishtutor.app.ui.AuthUiState,
-    subState: com.englishtutor.app.ui.SubscriptionUiState,
+    authState: com.vocalbharat.app.ui.AuthUiState,
+    subState: com.vocalbharat.app.ui.SubscriptionUiState,
     navController: NavController,
     onClose: () -> Unit
 ) {
@@ -636,7 +636,7 @@ fun AppDrawer(
 @Composable
 fun HomeScreenContent(
     viewModel: TutorViewModel,
-    subState: com.englishtutor.app.ui.SubscriptionUiState,
+    subState: com.vocalbharat.app.ui.SubscriptionUiState,
     onNavigateToSubscription: () -> Unit,
     onNavigateToHistory: () -> Unit,
     onRequestPermission: () -> Unit

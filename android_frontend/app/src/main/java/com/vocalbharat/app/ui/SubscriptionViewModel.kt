@@ -1,13 +1,13 @@
-package com.englishtutor.app.ui
+package com.vocalbharat.app.ui
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.englishtutor.app.data.local.SessionManager
-import com.englishtutor.app.data.model.InitiatePaymentOut
-import com.englishtutor.app.data.model.PlanInfo
-import com.englishtutor.app.data.model.SubscriptionStatusOut
-import com.englishtutor.app.data.remote.TutorApiClient
+import com.vocalbharat.app.data.local.SessionManager
+import com.vocalbharat.app.data.model.InitiatePaymentOut
+import com.vocalbharat.app.data.model.PlanInfo
+import com.vocalbharat.app.data.model.SubscriptionStatusOut
+import com.vocalbharat.app.data.remote.TutorApiClient
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

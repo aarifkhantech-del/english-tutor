@@ -1,4 +1,4 @@
-package com.englishtutor.app.ui.theme
+package com.vocalbharat.app.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

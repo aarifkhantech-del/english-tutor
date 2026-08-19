@@ -1,4 +1,4 @@
-package com.englishtutor.app.ui.components
+package com.vocalbharat.app.ui.components
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
@@ -18,7 +18,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.englishtutor.app.ui.theme.*
+import com.vocalbharat.app.ui.theme.*
 
 @Composable
 fun RecordButton(

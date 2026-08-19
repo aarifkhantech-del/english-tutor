@@ -1,4 +1,4 @@
-package com.englishtutor.app.data.model
+package com.vocalbharat.app.data.model
 
 data class SpeakHistoryEntry(
     val id: String = "",

@@ -1,4 +1,4 @@
-package com.englishtutor.app.ui
+package com.vocalbharat.app.ui
 
 import android.app.Application
 import android.content.Intent
@@ -8,9 +8,9 @@ import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.englishtutor.app.data.local.SessionManager
-import com.englishtutor.app.data.model.GrammarResponse
-import com.englishtutor.app.data.remote.TutorApiClient
+import com.vocalbharat.app.data.local.SessionManager
+import com.vocalbharat.app.data.model.GrammarResponse
+import com.vocalbharat.app.data.remote.TutorApiClient
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

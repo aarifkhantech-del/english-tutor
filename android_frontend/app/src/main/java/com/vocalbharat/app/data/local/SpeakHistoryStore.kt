@@ -1,9 +1,9 @@
-package com.englishtutor.app.data.local
+package com.vocalbharat.app.data.local
 
 import android.content.Context
-import com.englishtutor.app.data.model.CorrectionResult
-import com.englishtutor.app.data.model.SpeakHistoryEntry
-import com.englishtutor.app.data.model.TutorResponse
+import com.vocalbharat.app.data.model.CorrectionResult
+import com.vocalbharat.app.data.model.SpeakHistoryEntry
+import com.vocalbharat.app.data.model.TutorResponse
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import java.io.File

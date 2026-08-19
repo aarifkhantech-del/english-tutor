@@ -1,4 +1,4 @@
-package com.englishtutor.app.ui.screens
+package com.vocalbharat.app.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -29,9 +29,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.englishtutor.app.ui.AuthUiState
-import com.englishtutor.app.ui.components.ScreenHeader
-import com.englishtutor.app.ui.theme.*
+import com.vocalbharat.app.ui.AuthUiState
+import com.vocalbharat.app.ui.components.ScreenHeader
+import com.vocalbharat.app.ui.theme.*
 
 @Composable
 fun LoginScreen(

@@ -1,6 +1,6 @@
 """
 Feedback & Help Submission API
-Collects user feedback and help requests, stores to DB, and emails aarifkhan.tech@gmail.com
+Collects user feedback and help requests, stores to DB, and emails vocalbharat91@gmail.com
 """
 
 import logging
@@ -19,7 +19,7 @@ logger = logging.getLogger("english_tutor.feedback")
 
 router = APIRouter(prefix="/feedback", tags=["Feedback & Help"])
 
-OWNER_EMAIL = "aarifkhan.tech@gmail.com"
+OWNER_EMAIL = "vocalbharat91@gmail.com"
 APP_NAME = "VocalBharat"
 
 

@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.englishtutor.app"
+    namespace = "com.vocalbharat.app"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.englishtutor.app"
+        applicationId = "com.vocalbharat.app"
         minSdk = 24
         targetSdk = 34
         versionCode = 1

@@ -1,4 +1,4 @@
-package com.englishtutor.app.ui.theme
+package com.vocalbharat.app.ui.theme
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.lightColorScheme
@@ -16,7 +16,7 @@ private val LightColorScheme = lightColorScheme(
 )
 
 @Composable
-fun EnglishTutorTheme(content: @Composable () -> Unit) {
+fun VocalBharatTheme(content: @Composable () -> Unit) {
     MaterialTheme(
         colorScheme = LightColorScheme,
         typography = Typography,

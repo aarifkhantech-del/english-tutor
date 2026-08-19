@@ -1,4 +1,4 @@
-package com.englishtutor.app.ui.screens
+package com.vocalbharat.app.ui.screens
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
@@ -22,8 +22,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.englishtutor.app.ui.FeedbackUiState
-import com.englishtutor.app.ui.theme.*
+import com.vocalbharat.app.ui.FeedbackUiState
+import com.vocalbharat.app.ui.theme.*
 
 val StarAmber  = Color(0xFFFFB300)
 val HelpOrange = Color(0xFFFF5252)
@@ -51,7 +51,7 @@ fun FeedbackScreen(
             .padding(bottom = 40.dp)
     ) {
         // ── Header ──────────────────────────────────────────────────────────
-        com.englishtutor.app.ui.components.ScreenHeader(
+        com.vocalbharat.app.ui.components.ScreenHeader(
             title = "Share Your Feedback",
             subtitle = "Your thoughts go directly to the developer ⚡",
             gradientColors = listOf(AppAccent, AppAccentEnd)
@@ -184,7 +184,7 @@ fun FeedbackScreen(
                         tint = AppAccent, modifier = Modifier.size(16.dp))
                     Spacer(Modifier.width(8.dp))
                     Text(
-                        text = "Or email directly: aarifkhan.tech@gmail.com",
+                        text = "Or email directly: vocalbharat91@gmail.com",
                         color = TextSecondary,
                         fontSize = 13.sp
                     )
@@ -258,7 +258,7 @@ fun StarRatingSection(rating: Int, onRatingChange: (Int) -> Unit) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HelpScreen(
-    uiState: com.englishtutor.app.ui.HelpUiState,
+    uiState: com.vocalbharat.app.ui.HelpUiState,
     onNameChange: (String) -> Unit,
     onEmailChange: (String) -> Unit,
     onIssueTypeChange: (String) -> Unit,
@@ -279,7 +279,7 @@ fun HelpScreen(
             .padding(bottom = 40.dp)
     ) {
         // ── Header ──────────────────────────────────────────────────────────
-        com.englishtutor.app.ui.components.ScreenHeader(
+        com.vocalbharat.app.ui.components.ScreenHeader(
             title = "Help & Support",
             subtitle = "We'll reply to your email within 24 hours 🆘",
             gradientColors = listOf(Color(0xFFFF5252), Color(0xFFFF8F00))
@@ -308,7 +308,7 @@ fun HelpScreen(
             )
             FaqItem(
                 question = "How do I get a refund?",
-                answer = "Email aarifkhan.tech@gmail.com with your Razorpay payment ID within 7 days."
+                answer = "Email vocalbharat91@gmail.com with your Razorpay payment ID within 7 days."
             )
         }
 
