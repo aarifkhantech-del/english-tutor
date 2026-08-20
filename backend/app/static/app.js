@@ -7,6 +7,7 @@
 const state = {
   token: localStorage.getItem("vb_auth_token") || null,
   userEmail: localStorage.getItem("vb_user_email") || null,
+  userProfile: null,
   activeView: "tutor",
   tutorMode: "voice",
   
@@ -709,6 +710,7 @@ async function loadUserProfile() {
     if (res.ok) {
       const profile = await res.json();
       state.userEmail = profile.email;
+      state.userProfile = profile;
       updateAccountUI();
     } else {
       // Token expired
@@ -721,16 +723,21 @@ async function loadUserProfile() {
 
 function updateAccountUI() {
   const label = document.getElementById("accountLabel");
+  const profileName = document.getElementById("profileUserName");
   const profileEmail = document.getElementById("profileUserEmail");
   const subEmail = document.getElementById("subUserEmail");
 
   if (state.token && state.userEmail) {
-    label.textContent = state.userEmail.split("@")[0];
+    const displayName = state.userProfile?.full_name ||
+      [state.userProfile?.first_name, state.userProfile?.last_name].filter(Boolean).join(" ");
+    label.textContent = displayName || state.userEmail.split("@")[0];
+    profileName.textContent = displayName || "Signed-in Learner";
     profileEmail.textContent = state.userEmail;
     subEmail.textContent = state.userEmail;
   } else {
     label.textContent = "Sign In";
-    profileEmail.textContent = "Guest";
+    profileName.textContent = "Guest Learner";
+    profileEmail.textContent = "";
     subEmail.textContent = "Guest Learner";
   }
 }
@@ -738,6 +745,7 @@ function updateAccountUI() {
 function logoutUser() {
   state.token = null;
   state.userEmail = null;
+  state.userProfile = null;
   localStorage.removeItem("vb_auth_token");
   localStorage.removeItem("vb_user_email");
   state.subscription = {

@@ -23,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -30,6 +31,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vocalbharat.app.ui.AuthUiState
+import com.vocalbharat.app.R
 import com.vocalbharat.app.ui.components.ScreenHeader
 import com.vocalbharat.app.ui.theme.*
 
@@ -104,12 +106,19 @@ fun LoginScreen(
                 )
                 Spacer(Modifier.height(6.dp))
                 Text(
-                    text = uiState.userEmail ?: "Signed in with email",
+                    text = uiState.userProfile?.fullName?.ifBlank { null }
+                        ?: listOf(uiState.userProfile?.firstName, uiState.userProfile?.lastName)
+                            .filterNotNull().filter { it.isNotBlank() }.joinToString(" ").ifBlank { uiState.userEmail ?: "Signed in" },
                     color = AppAccent,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium
                 )
                 Spacer(Modifier.height(24.dp))
+
+                uiState.userProfile?.takeIf { it.email.isNotBlank() }?.let { profile ->
+                    Text(profile.email, color = TextSecondary, fontSize = 12.sp)
+                    Spacer(Modifier.height(16.dp))
+                }
 
                 Button(
                     onClick = onLogout,
@@ -160,7 +169,12 @@ fun LoginScreen(
                     if (uiState.isSigningInWithGoogle) {
                         CircularProgressIndicator(color = AppAccent, modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
                     } else {
-                        Text("G", color = Color(0xFF4285F4), fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                        Icon(
+                            painter = painterResource(R.drawable.ic_google_g),
+                            contentDescription = null,
+                            tint = Color.Unspecified,
+                            modifier = Modifier.size(22.dp)
+                        )
                         Spacer(Modifier.width(10.dp))
                         Text("Continue with Google", color = Color(0xFF202124), fontSize = 15.sp, fontWeight = FontWeight.Bold)
                     }

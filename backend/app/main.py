@@ -106,8 +106,8 @@ def create_app() -> FastAPI:
             status_code=503,
             content={
                 "detail": (
-                    "Database is temporarily unavailable. "
-                    "Whitelist this machine's public IP in MongoDB Atlas Network Access."
+                    "Database is temporarily unavailable. Check the deployed service's "
+                    "MongoDB credentials and its outbound IP ranges in MongoDB Atlas Network Access."
                 )
             },
         )
@@ -125,5 +125,4 @@ def create_app() -> FastAPI:
 
 
 app = create_app()
-
 

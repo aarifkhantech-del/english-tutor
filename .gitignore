@@ -27,11 +27,14 @@ captures/
 .cxx/
 build/
 android_frontend/.gradle/
+android_frontend/.gradle-user/
+android_frontend/.android-user/
 android_frontend/.idea/
 android_frontend/*.iml
 android_frontend/local.properties
 android_frontend/build/
 android_frontend/app/build/
+android_frontend/app/release/
 android_frontend/gradlew
 android_frontend/gradlew.bat
 

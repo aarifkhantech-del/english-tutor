@@ -62,7 +62,13 @@ async def sign_in_with_google(payload: GoogleSignInIn):
 
     email = str(claims["email"]).lower().strip()
     try:
-        _, is_new = get_or_create_user(email)
+        _, is_new = get_or_create_user(
+            email,
+            first_name=str(claims.get("given_name") or ""),
+            last_name=str(claims.get("family_name") or ""),
+            full_name=str(claims.get("name") or ""),
+            avatar_url=str(claims.get("picture") or ""),
+        )
     except RuntimeError as exc:
         logger.error("Google Sign-In unavailable: %s", exc)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Authentication is temporarily unavailable.")
@@ -121,6 +127,10 @@ async def get_me(current_user=Depends(get_current_user)):
     return UserOut(
         id=current_user.id,
         email=current_user.email,
+        first_name=current_user.first_name,
+        last_name=current_user.last_name,
+        full_name=current_user.full_name,
+        avatar_url=current_user.avatar_url,
         is_active=current_user.is_active,
         created_at=current_user.created_at,
         last_login_at=current_user.last_login_at,

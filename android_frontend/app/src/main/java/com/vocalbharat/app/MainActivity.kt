@@ -623,6 +623,19 @@ fun AppDrawer(
                 Text("VocalBharat", color = Color(0xFF0F172A), fontSize = 18.sp, fontWeight = FontWeight.Bold)
 
                 if (authState.isLoggedIn) {
+                    val profileName = authState.userProfile?.fullName?.ifBlank { null }
+                        ?: listOf(authState.userProfile?.firstName, authState.userProfile?.lastName)
+                            .filterNotNull().filter { it.isNotBlank() }.joinToString(" ").ifBlank { null }
+                    if (profileName != null) {
+                        Text(
+                            text = profileName,
+                            color = Color(0xFF0F172A),
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                     Text(
                         text = authState.userEmail ?: "Logged In",
                         color = Color(0xFF475569),

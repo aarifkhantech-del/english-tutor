@@ -7,14 +7,14 @@ val googleWebClientId = providers.gradleProperty("GOOGLE_WEB_CLIENT_ID").orElse(
 
 android {
     namespace = "com.vocalbharat.app"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.vocalbharat.app"
         minSdk = 24
-        targetSdk = 34
-        versionCode = 21
-        versionName = "2.1.0"
+        targetSdk = 35
+        versionCode = 24
+        versionName = "3.1.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -36,7 +36,8 @@ android {
             manifestPlaceholders["usesCleartextTraffic"] = "true"
         }
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             isDebuggable = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),

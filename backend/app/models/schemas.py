@@ -103,6 +103,10 @@ class UserOut(BaseModel):
     """Current authenticated user info."""
     id: str
     email: str
+    first_name: str = ""
+    last_name: str = ""
+    full_name: str = ""
+    avatar_url: str = ""
     is_active: bool
     created_at: datetime
     last_login_at: Optional[datetime] = None

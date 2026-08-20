@@ -19,6 +19,10 @@ class MongoUser:
         self._data = data
         self.id = data.get("id") or str(data.get("_id", ""))
         self.email = data.get("email", "")
+        self.first_name = data.get("first_name", "")
+        self.last_name = data.get("last_name", "")
+        self.full_name = data.get("full_name", "")
+        self.avatar_url = data.get("avatar_url", "")
         self.is_active = data.get("is_active", True)
         self.request_count = int(data.get("request_count", 0))
         self.created_at = data.get("created_at")
@@ -50,18 +54,43 @@ def get_user_by_id(user_id: str) -> Optional[Dict[str, Any]]:
     return db.users.find_one({"id": user_id})
 
 
-def get_or_create_user(email: str) -> Tuple[Dict[str, Any], bool]:
+def get_or_create_user(
+    email: str,
+    first_name: str = "",
+    last_name: str = "",
+    full_name: str = "",
+    avatar_url: str = "",
+) -> Tuple[Dict[str, Any], bool]:
     db = get_mongo_db()
     if db is None:
         raise RuntimeError("MongoDB is not configured or the client failed to initialize.")
     clean_email = email.lower().strip()
     existing = db.users.find_one({"email": clean_email})
     if existing:
+        profile_updates = {
+            key: value for key, value in {
+                "first_name": first_name.strip(),
+                "last_name": last_name.strip(),
+                "full_name": full_name.strip(),
+                "avatar_url": avatar_url.strip(),
+            }.items() if value
+        }
+        if profile_updates:
+            profile_updates["updated_at"] = _now()
+            existing = db.users.find_one_and_update(
+                {"id": existing["id"]},
+                {"$set": profile_updates},
+                return_document=ReturnDocument.AFTER,
+            )
         return existing, False
 
     user_doc = {
         "id": str(uuid.uuid4()),
         "email": clean_email,
+        "first_name": first_name.strip(),
+        "last_name": last_name.strip(),
+        "full_name": full_name.strip(),
+        "avatar_url": avatar_url.strip(),
         "is_active": True,
         "request_count": 0,
         "created_at": _now(),

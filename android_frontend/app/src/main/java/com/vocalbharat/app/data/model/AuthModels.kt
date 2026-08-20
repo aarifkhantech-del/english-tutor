@@ -30,6 +30,10 @@ data class TokenOut(
 data class UserOut(
     val id: String,
     val email: String,
+    @SerializedName("first_name") val firstName: String = "",
+    @SerializedName("last_name") val lastName: String = "",
+    @SerializedName("full_name") val fullName: String = "",
+    @SerializedName("avatar_url") val avatarUrl: String = "",
     @SerializedName("is_active") val isActive: Boolean,
     @SerializedName("created_at") val createdAt: String,
     @SerializedName("last_login_at") val lastLoginAt: String? = null
