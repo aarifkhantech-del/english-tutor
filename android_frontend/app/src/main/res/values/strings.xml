@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">VocalBharat</string>
+    <string name="app_name">Vocal Bharat</string>
     <string name="app_description">AI spoken English tutor for Hindi speakers. Speak Hindi, get English translation, pronunciation audio, and grammar help.</string>
     <string name="shortcut_practice_short">Practice</string>
     <string name="shortcut_practice_long">Speak Hindi to English</string>

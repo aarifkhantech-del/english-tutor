@@ -143,7 +143,7 @@ fun LoginScreen(
             } else if (!uiState.isOtpSent) {
                 // ── Primary Google Sign-In, with OTP as a fallback ───────────
                 Text(
-                    text = "Sign in to VocalBharat",
+                    text = "Sign in to Vocal Bharat",
                     color = TextPrimary,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold

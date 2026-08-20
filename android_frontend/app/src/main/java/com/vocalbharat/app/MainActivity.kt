@@ -222,7 +222,7 @@ class MainActivity : ComponentActivity(), PaymentResultWithDataListener {
 
         try {
             val options = JSONObject()
-            options.put("name", "VocalBharat")
+            options.put("name", "Vocal Bharat")
             options.put("description", "Spoken English Monthly Pro")
             options.put("image", "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f399.png")
             options.put("theme.color", "#2979FF")
@@ -401,7 +401,7 @@ fun AppShell(
                                      Screen.Feedback.route     -> "Feedback"
                                      Screen.Help.route         -> "Help & Support"
                                      Screen.Home.route         -> "Hindi to English"
-                                     else -> "VocalBharat"
+                                     else -> "Vocal Bharat"
                                 },
                                 color = Color(0xFF0F172A), fontSize = 17.sp, fontWeight = FontWeight.Bold
                             )
@@ -619,7 +619,7 @@ fun AppDrawer(
                 ) { Text("VB", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Black) }
 
                 Spacer(Modifier.height(12.dp))
-                Text("VocalBharat", color = Color(0xFF0F172A), fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Text("Vocal Bharat", color = Color(0xFF0F172A), fontSize = 18.sp, fontWeight = FontWeight.Bold)
 
                 if (authState.isLoggedIn) {
                     val profileName = authState.userProfile?.fullName?.ifBlank { null }
@@ -718,7 +718,7 @@ fun AppDrawer(
         HorizontalDivider(color = Color(0xFFE2E8F0))
         Spacer(Modifier.height(8.dp))
         Text(
-            "VocalBharat v${BuildConfig.VERSION_NAME}",
+            "Vocal Bharat v${BuildConfig.VERSION_NAME}",
             color = Color(0xFF94A3B8),
             fontSize = 11.sp,
             modifier = Modifier.padding(start = 20.dp, bottom = 16.dp)
@@ -845,7 +845,7 @@ fun HomeScreenContent(
                         text = if (AppConfig.allowServerOverride)
                             "Backend offline. Tap Settings to configure."
                         else
-                            "Can't reach VocalBharat servers. Check your internet and try again.",
+                            "Can't reach Vocal Bharat servers. Check your internet and try again.",
                         tint = RecordingRed,
                         action = if (AppConfig.allowServerOverride) {
                             { TextButton(onClick = { viewModel.openSettings() }) { Text("Fix", fontSize = 11.sp, color = AppAccent) } }

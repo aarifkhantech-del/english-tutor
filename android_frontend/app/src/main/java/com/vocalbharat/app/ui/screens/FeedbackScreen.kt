@@ -140,7 +140,7 @@ fun FeedbackScreen(
                 FeedbackTextField(
                     label = "Your Feedback *",
                     value = uiState.message,
-                    placeholder = "Tell us what you think about VocalBharat…",
+                    placeholder = "Tell us what you think about Vocal Bharat…",
                     onValueChange = onMessageChange,
                     singleLine = false,
                     minLines = 5
@@ -299,7 +299,7 @@ fun HelpScreen(
             Spacer(Modifier.height(12.dp))
             FaqItem(
                 question = "Microphone not working?",
-                answer = "Allow mic permission: Settings → Apps → VocalBharat → Permissions → Microphone → Allow."
+                answer = "Allow mic permission: Settings → Apps → Vocal Bharat → Permissions → Microphone → Allow."
             )
             FaqItem(
                 question = "Payment done but Pro not active?",

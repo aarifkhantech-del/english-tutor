@@ -99,7 +99,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                         isLoggedIn = true,
                         userEmail = tokenOut.email,
                         isOtpSent = false,
-                        successMessage = "Welcome to VocalBharat!",
+                        successMessage = "Welcome to Vocal Bharat!",
                         errorMessage = null
                     )
                 }
@@ -125,7 +125,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                         isSigningInWithGoogle = false,
                         isLoggedIn = true,
                         userEmail = tokenOut.email,
-                        successMessage = "Welcome to VocalBharat!"
+                        successMessage = "Welcome to Vocal Bharat!"
                     )
                 }
                 onLoginSuccess()

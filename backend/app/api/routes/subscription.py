@@ -40,6 +40,15 @@ def _now() -> datetime:
     return datetime.now(timezone.utc)
 
 
+def _as_utc(value: Any) -> datetime | None:
+    """Normalize MongoDB's timezone-naive BSON dates before Python compares them."""
+    if not isinstance(value, datetime):
+        return None
+    if value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc)
+    return value.astimezone(timezone.utc)
+
+
 # ── Plan catalogue ────────────────────────────────────────────────────────────
 
 def _get_plans() -> list[PlanInfo]:
@@ -275,21 +284,24 @@ def _build_status(user) -> SubscriptionStatusOut:
             quota_exceeded=(requests_used >= requests_limit),
         )
 
-    is_active = bool(sub.get("is_active")) and sub.get("end_date") and sub["end_date"] > _now()
+    now = _now()
+    start_date = _as_utc(sub.get("start_date"))
+    end_date = _as_utc(sub.get("end_date"))
+    is_active = bool(sub.get("is_active")) and end_date is not None and end_date > now
     status_value = sub.get("status")
     if status_value == "active" and not is_active:
         status_value = "expired"
         if db is not None:
-            db.subscriptions.update_one({"id": sub["id"]}, {"$set": {"status": "expired", "updated_at": _now()}})
+            db.subscriptions.update_one({"id": sub["id"]}, {"$set": {"status": "expired", "updated_at": now}})
 
     return SubscriptionStatusOut(
         has_subscription=True,
         plan=sub.get("plan"),
         status=status_value,
         is_active=is_active,
-        starts_at=sub.get("start_date"),
-        expires_at=sub.get("end_date"),
-        days_remaining=max(0, (sub.get("end_date") - _now()).days) if sub.get("end_date") else 0,
+        starts_at=start_date,
+        expires_at=end_date,
+        days_remaining=max(0, (end_date - now).days) if end_date else 0,
         requests_used=requests_used,
         requests_limit=requests_limit,
         requests_remaining=requests_remaining,
