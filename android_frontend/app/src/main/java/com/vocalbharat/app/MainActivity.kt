@@ -38,6 +38,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import androidx.core.view.WindowCompat
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialException
@@ -112,6 +113,10 @@ class MainActivity : ComponentActivity(), PaymentResultWithDataListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        WindowCompat.getInsetsController(window, window.decorView).apply {
+            isAppearanceLightStatusBars = true
+            isAppearanceLightNavigationBars = true
+        }
         pendingNavRoute = routeFromIntent(intent)
 
         // Preload Razorpay Checkout resources
@@ -272,8 +277,9 @@ class MainActivity : ComponentActivity(), PaymentResultWithDataListener {
                 signature = signature
             )
         } else {
-            Toast.makeText(this, "Payment successful (ID: $razorpayPaymentId)", Toast.LENGTH_LONG).show()
-            subscriptionViewModel.loadPlansAndStatus(serverUrl)
+            // The SDK may omit PaymentData on some UPI returns. The view model
+            // retains the initiated order and verifies it directly with Razorpay.
+            subscriptionViewModel.checkOrderStatus(serverUrl)
         }
     }
 
@@ -364,6 +370,7 @@ fun AppShell(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(Color.White)
+                        .statusBarsPadding()
                         .padding(horizontal = 16.dp, vertical = 12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -507,15 +514,7 @@ fun AppShell(
                                     }
                                 )
                             },
-                            onNavigateToLogin = { navController.navigate(Screen.Login.route) },
-                            onCheckStatus = {
-                                subscriptionViewModel.checkOrderStatus(
-                                    serverUrl = tutorState.serverUrl,
-                                    onSuccess = {
-                                        Toast.makeText(navController.context, "🎉 Monthly Pro Plan is now ACTIVE!", Toast.LENGTH_LONG).show()
-                                    }
-                                )
-                            }
+                            onNavigateToLogin = { navController.navigate(Screen.Login.route) }
                         )
 
                     }

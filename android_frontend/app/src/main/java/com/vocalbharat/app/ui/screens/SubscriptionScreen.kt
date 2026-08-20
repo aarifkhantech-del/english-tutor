@@ -36,8 +36,7 @@ fun SubscriptionScreen(
     userEmail: String?,
     onSelectPlan: (String) -> Unit,
     onSubscribe: (String) -> Unit,
-    onNavigateToLogin: () -> Unit,
-    onCheckStatus: () -> Unit = {}
+    onNavigateToLogin: () -> Unit
 ) {
     val scrollState = rememberScrollState()
 
@@ -232,25 +231,6 @@ fun SubscriptionScreen(
                 onSubscribe = { onSubscribe(plan.id) }
             )
             Spacer(Modifier.height(16.dp))
-        }
-
-        // ── Already Paid Check Button (only when not active) ──
-        if (!uiState.status.isActive) {
-            OutlinedButton(
-                onClick = onCheckStatus,
-                enabled = !uiState.isProcessingPayment,
-                modifier = Modifier.fillMaxWidth().height(46.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = AppAccent
-                ),
-                border = BorderStroke(1.dp, AppAccent.copy(alpha = 0.5f))
-            ) {
-                Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(Modifier.width(8.dp))
-                Text("Already Paid via UPI? Check Status", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-            }
-            Spacer(Modifier.height(12.dp))
         }
 
         Text(

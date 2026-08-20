@@ -29,6 +29,9 @@ class SubscriptionViewModel(application: Application) : AndroidViewModel(applica
 
     private val sessionManager = SessionManager.getInstance(application)
     private val apiClient = TutorApiClient()
+    // Kept while the checkout activity is open so a user can retry server-side
+    // verification if the SDK callback is delayed or missing its signature.
+    private var pendingOrderId: String? = null
 
     private val _uiState = MutableStateFlow(
         SubscriptionUiState(status = statusFromLocalCount(sessionManager.getLocalRequestCount()))
@@ -137,6 +140,7 @@ class SubscriptionViewModel(application: Application) : AndroidViewModel(applica
             // 1. Initiate payment order
             val initiateResult = apiClient.initiatePayment(serverUrl, token, planId)
             initiateResult.onSuccess { orderOut ->
+                pendingOrderId = orderOut.orderId
                 if (AppConfig.allowServerOverride && orderOut.gateway == "mock") {
                     // Debug-only simulated payment. Release builds always use Razorpay.
                     val confirmResult = apiClient.confirmPayment(
@@ -207,6 +211,7 @@ class SubscriptionViewModel(application: Application) : AndroidViewModel(applica
                 signature = signature
             )
             confirmResult.onSuccess { newStatus ->
+                pendingOrderId = null
                 _uiState.update {
                     it.copy(
                         isProcessingPayment = false,
@@ -216,11 +221,35 @@ class SubscriptionViewModel(application: Application) : AndroidViewModel(applica
                 }
                 onSuccess()
             }.onFailure { err ->
-                _uiState.update {
-                    it.copy(
-                        isProcessingPayment = false,
-                        errorMessage = "Payment verification failed: ${err.message}"
-                    )
+                // A completed UPI/card payment can reach Razorpay before the SDK
+                // returns its signature. Verify the order directly before showing
+                // an error, so the subscription is not left pending.
+                apiClient.checkOrderStatus(serverUrl, token, orderId).onSuccess { status ->
+                    if (status.isActive) {
+                        pendingOrderId = null
+                        _uiState.update {
+                            it.copy(
+                                isProcessingPayment = false,
+                                status = status,
+                                successMessage = "🎉 Payment verified & Monthly Pro activated!"
+                            )
+                        }
+                        onSuccess()
+                    } else {
+                        _uiState.update {
+                            it.copy(
+                                isProcessingPayment = false,
+                                errorMessage = "Payment verification failed: ${err.message}"
+                            )
+                        }
+                    }
+                }.onFailure {
+                    _uiState.update {
+                        it.copy(
+                            isProcessingPayment = false,
+                            errorMessage = "Payment verification failed: ${err.message}"
+                        )
+                    }
                 }
             }
         }
@@ -239,9 +268,10 @@ class SubscriptionViewModel(application: Application) : AndroidViewModel(applica
 
         viewModelScope.launch {
             _uiState.update { it.copy(isProcessingPayment = true, errorMessage = null, successMessage = null) }
-            val result = apiClient.checkOrderStatus(serverUrl, token, orderId)
+            val result = apiClient.checkOrderStatus(serverUrl, token, orderId ?: pendingOrderId)
             result.onSuccess { newStatus ->
                 if (newStatus.isActive) {
+                    pendingOrderId = null
                     _uiState.update {
                         it.copy(
                             isProcessingPayment = false,
@@ -282,4 +312,3 @@ class SubscriptionViewModel(application: Application) : AndroidViewModel(applica
         _uiState.update { it.copy(errorMessage = null, successMessage = null) }
     }
 }
-

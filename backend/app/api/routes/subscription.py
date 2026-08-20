@@ -140,8 +140,9 @@ async def confirm_payment(
     gw = gateway()
     result = await gw.verify_payment(payload.order_id, payload.payment_id, payload.signature)
     if not result.success:
-        db.payments.update_one({"id": payment["id"]}, {"$set": {"status": "failed", "updated_at": _now()}})
-        db.subscriptions.update_one({"id": payment.get("subscription_id")}, {"$set": {"status": "cancelled", "is_active": False, "updated_at": _now()}})
+        # Do not cancel the pending record solely because the SDK callback did
+        # not include a valid signature. The app/webhook can still verify a
+        # captured Razorpay order directly.
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Payment verification failed: {result.message}")
 
     now = _now()
@@ -163,23 +164,41 @@ async def check_order_status_endpoint(
     payload: CheckOrderIn = Body(default_factory=CheckOrderIn),
     current_user=Depends(get_current_user),
 ):
-    gw = gateway()
-    if payload.order_id and payload.order_id.strip():
-        order_id = payload.order_id.strip()
-        result = await gw.check_order_status(order_id)
-        if not result.success:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=result.message)
+    db = get_mongo_db()
+    if db is None:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="MongoDB is not configured.")
 
-        db = get_mongo_db()
-        if db is not None:
-            db.payments.update_one({"order_id": order_id}, {"$set": {"status": "captured", "payment_id": result.payment_id, "updated_at": _now()}})
-            payment = db.payments.find_one({"order_id": order_id, "user_id": current_user.id})
-            if payment and payment.get("subscription_id"):
-                now = _now()
-                db.subscriptions.update_one({"id": payment["subscription_id"]}, {"$set": {"status": "active", "is_active": True, "start_date": now, "end_date": now + timedelta(days=30), "updated_at": now}})
-        return _build_status(current_user)
+    order_id = payload.order_id.strip() if payload.order_id and payload.order_id.strip() else None
+    payment = None
+    if order_id:
+        payment = db.payments.find_one({"order_id": order_id, "user_id": current_user.id})
+    else:
+        # Recovery path for an Android callback that was interrupted after a
+        # completed payment. This intentionally scopes the lookup to the user.
+        payment = db.payments.find_one(
+            {"user_id": current_user.id, "status": {"$in": ["pending", "failed"]}},
+            sort=[("created_at", -1)],
+        )
+        order_id = payment.get("order_id") if payment else None
 
-    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No pending order found. Please initiate an upgrade order first.")
+    if not payment or not order_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No payment order found for this account.")
+
+    result = await gateway().check_order_status(order_id)
+    if not result.success:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=result.message)
+
+    now = _now()
+    db.payments.update_one(
+        {"id": payment["id"], "user_id": current_user.id},
+        {"$set": {"status": "captured", "payment_id": result.payment_id, "updated_at": now}},
+    )
+    if payment.get("subscription_id"):
+        db.subscriptions.update_one(
+            {"id": payment["subscription_id"], "user_id": current_user.id},
+            {"$set": {"status": "active", "is_active": True, "start_date": now, "end_date": now + timedelta(days=30), "updated_at": now}},
+        )
+    return _build_status(current_user)
 
 
 @router.post(
@@ -200,8 +219,9 @@ async def payment_webhook(request: Request):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid JSON payload in webhook body.")
 
     event = data.get("event", "")
-    order_id = data.get("order_id", "")
-    payment_id = data.get("payment_id", "")
+    payment_entity = data.get("payload", {}).get("payment", {}).get("entity", {})
+    order_id = payment_entity.get("order_id", data.get("order_id", ""))
+    payment_id = payment_entity.get("id", data.get("payment_id", ""))
 
     logger.info("Webhook received | event=%s | order=%s", event, order_id)
     db = get_mongo_db()
